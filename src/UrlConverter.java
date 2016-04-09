@@ -1,6 +1,5 @@
 import java.awt.*;        // Using AWT container and component classes
 import java.awt.event.*;  // Using AWT event classes and listener interfaces
-
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -8,6 +7,13 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 
 /**
  * 
@@ -17,65 +23,55 @@ import java.util.regex.Pattern;
  * @author gerwazy
  *
  */
-public class UrlConverter extends Frame implements ActionListener, WindowListener {
+public class UrlConverter implements ActionListener, WindowListener {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	private Label lblURL;    // Declare component Label
 	   private Label lblNew_URL;    // Declare component Label
 	   private TextField tfURL; // Declare component TextField
 	   private TextField tfNew_URL; // Declare component TextField
 	   private Button btnConvert;   // Declare component Button
+	   private Button btnAddRule; //Declare button for adding new textboxes for rules
 	   private String new_URL;     // New_URL value
 	   private static final String REGEX = "\\b&t=\\b\\d";
+	   private JTextField tfield;
+	   private int count;
+	   private String nameTField;
+	   private JFrame frame;
+	   private JList<String> choices;
+	   private JScrollPane listScroller;
 	   
 	   /** Constructor to setup GUI components and event handling */
 	   public UrlConverter () {
-	      setLayout(new FlowLayout());
-	         // "super" Frame (a Container) sets its layout to FlowLayout, which arranges
-	         // the components from left-to-right, and flow to next row from top-to-bottom.
-	 
-	      lblURL = new Label("URL");  // construct Label
-	      add(lblURL);                    // "super" Frame adds Label
-	 
+	      
+		  // initialize variables
+		  count = 0;
+	      nameTField = "tField";
+		  
+	      //initialize textfields
 	      tfURL = new TextField(90); // construct TextField
-	      tfURL.setEditable(true);       // set to read-only
-	      add(tfURL);                     // "super" Frame adds TextField
-	 
-	      lblNew_URL = new Label("New URL");  // construct Label
-	      add(lblNew_URL);                    // "super" Frame adds Label
-	 
 	      tfNew_URL = new TextField(90); // construct TextField
 	      tfNew_URL.setEditable(true);       // set to read-only
-	      add(tfNew_URL);                     // "super" Frame adds TextField
 	      
+	      //initialize labels
+	      lblURL = new Label("URL");  // construct Label
+	      lblNew_URL = new Label("New URL");  // construct Label
+	      //
+	      String data[] = {"\\b&t=\\b\\d","Item 2", "Item 3"};
+	      
+	      //initialize JList and its scroller
+	      choices = new JList<String>(data);
+	      choices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+	      choices.setLayoutOrientation(JList.VERTICAL);
+	      choices.setVisibleRowCount(-1);
+	      listScroller = new JScrollPane(choices);
+	      listScroller.setPreferredSize(new Dimension(250,80));
+	      
+	      //initialize buttons
 	      btnConvert = new Button("Convert");   // construct Button
-	      add(btnConvert);                    // "super" Frame adds Button
-	 
-	      btnConvert.addActionListener(this);
-	         // Clicking Button (source object) fires an ActionEvent.
-	         // btnCount (Button) registers this instance as an ActionEvent listener.
-	 
-	      addWindowListener(this);
-	        // "super" Frame (source) fires WindowEvent.
-	        // "super" Frame adds "this" object as a WindowEvent listener.
-	      setTitle("URL Converter");  // "super" Frame sets its title
-	      setSize(700, 200);        // "super" Frame sets its initial window size
-	 
-	      // For inspecting the components/container objects
-	      // System.out.println(this);
-	      // System.out.println(lblCount);
-	      // System.out.println(tfCount);
-	      // System.out.println(btnCount);
-	 
-	      setVisible(true);         // "super" Frame shows
-	 
-	      // System.out.println(this);
-	      // System.out.println(lblCount);
-	      // System.out.println(tfCount);
-	      // System.out.println(btnCount);
+	      btnAddRule = new Button("Add Rule");
+	      btnAddRule.addActionListener(this);
+	      btnConvert.addActionListener(this); // Clicking Button (source object) fires an ActionEvent.
+
 	   }
 	    /** WindowEvent handlers */
 	   // Called back upon clicking close-window button
@@ -153,7 +149,27 @@ public class UrlConverter extends Frame implements ActionListener, WindowListene
 	       tfNew_URL.setText(new_URL);
 	       System.out.println(new_URL);
 	    }
-	   
+	public void displayGUI(){
+		frame = new JFrame("Url Converter");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new FlowLayout());
+        // set the layout of the frame to FlowLayout, which arranges
+        // the components from left-to-right, and flow to next row from top-to-bottom.
+        frame.add(lblURL);                    // add label to the frame
+        frame.add(tfURL);                     // Frame adds TextField
+        frame.add(lblNew_URL);                    // Frame adds Label
+        frame.add(tfNew_URL);                     // Frame adds TextField
+        frame.add(btnConvert);                    // Frame adds Button
+        frame.add(btnAddRule);					// Add Rule button to the frame
+        //frame.add(choices);	//add choices listbox to the frame
+        frame.add(listScroller);
+	    frame.addWindowListener(this);
+	        // Frame (source) fires WindowEvent.
+	        // Frame adds "this" object as a WindowEvent listener.
+	    frame.setTitle("URL Converter");  // "super" Frame sets its title
+	    frame.setSize(700, 400);        // "super" Frame sets its initial window size
+	    frame.setVisible(true);         // "super" Frame shows
+	}
 	/**
 	 * The entry main() method 
 	 * @param args
@@ -161,19 +177,38 @@ public class UrlConverter extends Frame implements ActionListener, WindowListene
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 	      // Invoke the constructor to setup the GUI, by allocating an instance
-	      UrlConverter app = new UrlConverter();
+	      //UrlConverter app = new UrlConverter();
 	         // or simply "new AWTCounter();" for an anonymous instance
+		SwingUtilities.invokeLater(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                new UrlConverter().displayGUI();
+            }
+        });
 	}
 	
 	/** ActionEvent handler - Called back upon button-click. */
 	   @Override
 	   public void actionPerformed(ActionEvent evt) {
-	      //revalidate();
-	      //new_URL = tfURL.getText();
-	      convertString();
-	      removeTime();
-	      // Display the counter value on the TextField tfCount
-	      //tfNew_URL.setText(new_URL); 
+	      
+		   if(evt.getSource() == btnConvert){
+			   //revalidate();
+		      //new_URL = tfURL.getText();
+		      convertString();
+		      removeTime();
+		      // Display the counter value on the TextField tfCount
+		      //tfNew_URL.setText(new_URL); 
+		   } else if(evt.getSource() == btnAddRule){
+			   tfield = new JTextField(50);
+               tfield.setName(nameTField + count);
+               count++;
+               frame.add(tfield);
+               frame.revalidate();  // For JDK 1.7 or above.
+               //frame.getContentPane().revalidate(); // For JDK 1.6 or below.
+               frame.repaint();  
+		   }
 	   }
 
 }
