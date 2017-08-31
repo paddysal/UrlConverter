@@ -26,32 +26,60 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 
 /**
- * 
+ * @author Patryk Salek
  */
 
-/**
- * @author Patryk Salek
- *
+
+/*
+ * PLAYLISTS
+ * https://www.youtube.com/watch?v=c7nRTF2SowQ
+ * https://www.youtube.com/watch?v=acXXyruMtaY&list=PLs1-UdHIwbo5AZVWE4IKJuADxWpz7e-tw
+ * \&list=[a-zA-Z 0-9 -]*
+ */
+
+/*
+ * TIMESTAMPS
+ * https://youtu.be/xnER10j4ZBc?t=1m33s
+ * https://www.youtube.com/watch?v=xnER10j4ZBc&t=215 
+ * https://youtu.be/dT9eI40RNoQ?t=1h51m41s
+ * (\&?\??t=\d*?[h]?\d*[m]?\d*[s]|\&t=\d*) should match either style of timestamp
+ */
+
+
+/*
+ * COMBINED
+ * (\&?\??t=\d*?[h]?\d*[m]?\d+[s]|\&t=\d*|\&list=[a-zA-Z 0-9 -]+)
  */
 public class UrlConverter implements ActionListener, WindowListener, ClipboardOwner {
 
 	private Label lblURL;    // Declare component Label
 	   private Label lblNew_URL;    // Declare component Label
+	   private Label listInstructions;
+	   private Label listInfo;
+	   private Label urlInfo;
+	   
 	   private TextField tfURL; // Declare component TextField
 	   private TextField tfNew_URL; // Declare component TextField
+	   
 	   private Button btnConvert;   // Declare component Button
 	   private Button btnAddRule; //Declare button for adding new textboxes for rules
+	   
 	   private String new_URL;     // New_URL value
+	   
+	   //REGEX patterns to match against provided url
+	   private static final String REGEX_REMOVE_TIME = "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*)";
 	   private static final String REGEX = "\\b&t=\\b\\d";
+	   private static final String REGEX_REMOVE_PLAYLIST = "\\&list=[a-zA-Z 0-9 -]*";
+	   private static final String REGEX_MATCH_ALL = "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z 0-9 -]*)";
 	   private JTextField tfield;
 	   private int count;
 	   private String nameTField;
 	   private JFrame frame;
 	   private JList<String> choices;
 	   private JScrollPane listScroller;
-	   private Label listInstructions;
-	   private Label listInfo;
-	   private Label urlInfo;
+
+	   
+	   
 	   
 	   /** Constructor to setup GUI components and event handling */
 	   public UrlConverter () {
@@ -126,7 +154,7 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 	   
 	    public void removeTime(){
 	           System.out.println(new_URL + "r");
-	           Pattern p = Pattern.compile(REGEX);
+	           Pattern p = Pattern.compile(REGEX_MATCH_ALL);
 	           Matcher m = p.matcher(new_URL); // get a matcher object
 	           String con_str ="";
 	           int count = 0;
@@ -148,7 +176,6 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 
 	          }
 	    
-	           
 	        }
 	        
 	   public void convertString(){
