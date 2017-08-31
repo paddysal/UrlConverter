@@ -2,6 +2,7 @@ import java.awt.Button;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Label;        // Using AWT container and component classes
+import java.awt.List;
 import java.awt.TextField;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -15,6 +16,9 @@ import java.awt.event.ActionListener;  // Using AWT event classes and listener i
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,6 +119,13 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 		choices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		choices.setLayoutOrientation(JList.VERTICAL);
 		choices.setVisibleRowCount(-1);
+		
+	    int start = 0;
+	    int end = choices.getModel().getSize() - 1;
+	    if (end >= 0) {
+	    	choices.setSelectionInterval(start, end);
+	    }
+		
 		listScroller = new JScrollPane(choices);
 		listScroller.setPreferredSize(new Dimension(250,80));
 
@@ -171,10 +182,51 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 			}
 		}
 	}
+	public void getSelectedIndexes() {
+		 Object[] selectedIndexes = choices.getSelectedValuesList().toArray();
+		 Map<String, Integer> mappedIndexes = new HashMap<String, Integer>();
+		 int counter = 0;
+		 for(Object index : selectedIndexes){
+			 mappedIndexes.put((String) index, counter);
+			 counter += 1;
+		 }
+	}
+	
+	
+	public String returnRegex() {
+		int defaultRegex = 0;
+        String chosenRegex;
+        switch (defaultRegex) {
+            case 1:  chosenRegex = "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*)";
+                     break;
+            case 2:  chosenRegex = "(\\&list=[a-zA-Z 0-9 -]+\\&?\\index=?\\d+?)";
+                     break;
+            case 3:  chosenRegex = "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z 0-9 -]*)";
+                     break;
+            default: chosenRegex = "\\?t.*|\\&t.*|\\&l.*";
+                     break;
+        }
+		return chosenRegex;
+	}
+	
+	public void modifyURL(String Regex, String convertedString) {
+		Pattern p = Pattern.compile(Regex);
+		Matcher m = p.matcher(convertedString); // get a matcher object
+		convertedUrl ="";
+		int count = 0;
+
+		while(m.find()) {
+			count++;
+			if (count == 1){
+				convertedUrl = convertedString.substring(0, m.start()) + convertedString.substring(m.end());
+				tfNew_URL.setText(convertedUrl);
+			}
+		}
+	}
 	
 	public void removeTime(){
 		
-		Pattern p = Pattern.compile(REGEX_MATCH_ALL);
+		Pattern p = Pattern.compile(REGEX_REMOVE_TIME);
 		Matcher m = p.matcher(new_URL); // get a matcher object
 		if(Pattern.matches(REGEX, new_URL)) {
 			System.out.println("found a match");
@@ -185,7 +237,7 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 		while(m.find()) {
 			count++;
 			if (count == 1){
-				convertedUrl = new_URL.substring(0, m.start()) + new_URL.substring(m.end() + 1);;
+				convertedUrl = new_URL.substring(0, m.start()) + new_URL.substring(m.end() + 1);
 				tfNew_URL.setText(convertedUrl);
 			}
 		}
@@ -282,7 +334,8 @@ public class UrlConverter implements ActionListener, WindowListener, ClipboardOw
 	public void actionPerformed(ActionEvent evt) {
 
 		if(evt.getSource() == btnConvert){
-			removeAll(convertString());
+			//removeAll(convertString());
+			modifyURL(returnRegex(), convertString());
 			setClipboardContents(tfNew_URL.getText()); //add the converted url to the clipboard
 			// Display the counter value on the TextField tfCount
 			//tfNew_URL.setText(new_URL); 
