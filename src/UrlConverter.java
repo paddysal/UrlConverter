@@ -23,8 +23,15 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +41,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
+
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+import org.jnativehook.keyboard.NativeKeyEvent;
+import org.jnativehook.keyboard.NativeKeyListener;
 
 /**
  * @author Patryk Salek
@@ -67,7 +79,12 @@ import javax.swing.UIManager;
  * &feature=youtu.be
  */
 
-public class UrlConverter extends JFrame implements ClipboardOwner, ActionListener, WindowListener {
+/*
+ * Adding library to listen to global events
+ * https://github.com/kwhat/jnativehook/releases
+ */
+
+public class UrlConverter extends JFrame implements ClipboardOwner, ActionListener, WindowListener, NativeKeyListener {
 	/**
 	 * 
 	 */
@@ -103,6 +120,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JScrollPane listScroller;
 	TrayIcon trayIcon;
 	SystemTray tray;
+
+	// Set of currently pressed keys
+	private final Set<String> keysPressed = new HashSet<String>();
+	
+	/** Logging */
+	private static final Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
 
 	UrlConverter() {
 		super("SystemTray test");
@@ -166,6 +189,16 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		add(listScroller);
 		addWindowListener(this);
 
+		// Disable parent logger and set the desired level.
+		logger.setUseParentHandlers(false);
+		logger.setLevel(Level.ALL);
+
+		// Add our custom formatter to a console handler.
+		ConsoleHandler handler = new ConsoleHandler();
+		handler.setLevel(Level.WARNING);
+		logger.addHandler(handler);
+		
+		
 		try {
 			System.out.println("setting look and feel");
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -257,7 +290,17 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	public static void main(String[] args) {
-		new UrlConverter();
+		try {
+			GlobalScreen.registerNativeHook();
+		} catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+
+			System.exit(1);
+		}
+
+		GlobalScreen.addNativeKeyListener(new UrlConverter());
+		// new UrlConverter();
 	}
 
 	public void removeAll(String convertedString) {
@@ -277,12 +320,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	public String returnRegex() {
 
-/*		Path path = Paths.get("src/main/resources/shakespeare.txt");
-		try (BufferedWriter writer = Files.newBufferedWriter(path, Charset.forName("UTF-8"))) {
-			writer.write("To be, or not to be. That is the question.");
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}*/
+		/*
+		 * Path path = Paths.get("src/main/resources/shakespeare.txt"); try
+		 * (BufferedWriter writer = Files.newBufferedWriter(path,
+		 * Charset.forName("UTF-8"))) {
+		 * writer.write("To be, or not to be. That is the question."); } catch
+		 * (IOException ex) { ex.printStackTrace(); }
+		 */
 
 		Object[] selectedIndexes = choices.getSelectedValuesList().toArray();
 		Map<String, Integer> mappedIndexes = new HashMap<String, Integer>();
@@ -417,9 +461,17 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	public void windowActivated(WindowEvent arg0) {
 		// TODO Auto-generated method stub
 		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+		String is_youtube_link_l = "youtube.com"; // youtube url long version
+		String is_youtube_link_s = "youtu.be";
 		try {
 			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
-			tfURL.setText(paste);
+			if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
+					|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
+				System.out.println("Youtube url detected, placing it in the textbox");
+				tfURL.setText(paste);
+			} else {
+				System.out.println("NON Youtube text detected, ignoring it");
+			}
 
 		} catch (IOException error) {
 			System.out.println("Error" + error.getMessage());
@@ -429,38 +481,101 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	@Override
-	public void windowClosed(WindowEvent arg0) {
+	public void windowClosed(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void windowClosing(WindowEvent arg0) {
+	public void windowClosing(WindowEvent e) {
 		// TODO Auto-generated method stub
 		System.exit(0); // Terminate the program
 	}
 
 	@Override
-	public void windowDeactivated(WindowEvent arg0) {
+	public void windowDeactivated(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void windowDeiconified(WindowEvent arg0) {
+	public void windowDeiconified(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void windowIconified(WindowEvent arg0) {
+	public void windowIconified(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void windowOpened(WindowEvent arg0) {
+	public void windowOpened(WindowEvent e) {
 		// TODO Auto-generated method stub
 		getClipboardContents();
+	}
+
+	static void displayAll(Collection<Character> col) {
+		Iterator<Character> itr = col.iterator();
+		while (itr.hasNext()) {
+			String str = (String) itr.next().toString();
+			System.out.print(str + " ");
+		}
+		System.out.println();
+	}
+
+	@Override
+	public void nativeKeyPressed(NativeKeyEvent e) {
+		// TODO Auto-generated method stub
+
+		//int key = e.getKeyCode();
+		/*
+		 * if (key == KeyEvent.VK_C && ke) { dx = -1; }
+		 */
+		// keysPressed.add(e.getKeyChar());
+		char keyChar = e.getKeyChar();
+        if (keyChar == '?') {
+            System.out.println("You typed 'a'");
+          }
+		
+		keysPressed.add(NativeKeyEvent.getKeyText(e.getKeyCode()));
+		if (keysPressed.size() > 1) {
+			// More than one key is currently pressed.
+			// Iterate over pressed to get the keys.
+			// displayAll(keysPressed);
+			Iterator<String> itr = keysPressed.iterator();
+			while (itr.hasNext()) {
+				String str = itr.next();
+				System.out.print(str + " \n");
+				System.out.print(keysPressed.size() + " pressed \n");
+			}
+		}
+
+		System.out.println("Key Pressed (char): " + e.getKeyChar());
+		System.out.println("Key Pressed: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
+
+		if (e.getKeyCode() == NativeKeyEvent.VC_ESCAPE) {
+			try {
+				GlobalScreen.unregisterNativeHook();
+			} catch (NativeHookException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void nativeKeyReleased(NativeKeyEvent e) {
+		// TODO Auto-generated method stub
+		System.out.println("Key Released: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
+		keysPressed.remove(NativeKeyEvent.getKeyText(e.getKeyCode()));
+		System.out.print(keysPressed.size() + " released \n");
+	}
+
+	@Override
+	public void nativeKeyTyped(NativeKeyEvent e) {
+		// TODO Auto-generated method stub
+		System.out.println("Key Typed: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
 	}
 }
