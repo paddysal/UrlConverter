@@ -20,13 +20,9 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener; // Using AWT event classes and listener interfaces
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -71,7 +67,7 @@ import javax.swing.UIManager;
  * &feature=youtu.be
  */
 
-public class UrlConverter extends JFrame implements ClipboardOwner {
+public class UrlConverter extends JFrame implements ClipboardOwner, ActionListener, WindowListener {
 	/**
 	 * 
 	 */
@@ -152,8 +148,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 		// initialize buttons
 		btnConvert = new Button("Convert"); // construct Button
 		btnAddRule = new Button("Add Rule");
-		//btnAddRule.addActionListener(this);
-		//btnConvert.addActionListener(this); // Clicking Button (source object) fires an ActionEvent.
+		btnAddRule.addActionListener(this);
+		btnConvert.addActionListener(this); // Clicking Button (source object) fires an ActionEvent.
 
 		setLayout(new FlowLayout());
 		// set the layout of the frame to FlowLayout, which arranges
@@ -168,7 +164,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 		add(listInfo);
 		add(listInstructions);
 		add(listScroller);
-		
+		addWindowListener(this);
+
 		try {
 			System.out.println("setting look and feel");
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -209,10 +206,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 				if (e.getNewState() == ICONIFIED) {
 					try {
 						tray.add(trayIcon);
-						trayIcon.displayMessage("Minimized!", "Will be here if you need me :)", TrayIcon.MessageType.INFO);
+						trayIcon.displayMessage("Minimized!", "Will be here if you need me :)",
+								TrayIcon.MessageType.INFO);
 						setVisible(false);
 						System.out.println("added to SystemTray");
-						
+
 					} catch (AWTException ex) {
 						System.out.println("unable to add to tray");
 					}
@@ -253,7 +251,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 		// Frame adds "this" object as a WindowEvent listener.
 		setTitle("URL Converter"); // "super" Frame sets its title
 		setSize(700, 400); // "super" Frame sets its initial window size
-		getContentPane().setBackground( Color.DARK_GRAY );
+		getContentPane().setBackground(Color.DARK_GRAY);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true); // "super" Frame shows
 	}
@@ -261,7 +259,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 	public static void main(String[] args) {
 		new UrlConverter();
 	}
-	
+
 	public void removeAll(String convertedString) {
 		Pattern p = Pattern.compile(REGEX);
 		Matcher m = p.matcher(convertedString); // get a matcher object
@@ -279,12 +277,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 
 	public String returnRegex() {
 
-		Path path = Paths.get("src/main/resources/shakespeare.txt");
+/*		Path path = Paths.get("src/main/resources/shakespeare.txt");
 		try (BufferedWriter writer = Files.newBufferedWriter(path, Charset.forName("UTF-8"))) {
 			writer.write("To be, or not to be. That is the question.");
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		}
+		}*/
 
 		Object[] selectedIndexes = choices.getSelectedValuesList().toArray();
 		Map<String, Integer> mappedIndexes = new HashMap<String, Integer>();
@@ -354,7 +352,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 		System.out.println(new_URL);
 		return new_URL;
 	}
-	
+
 	/**
 	 * Get the String residing on the clipboard.
 	 *
@@ -393,5 +391,76 @@ public class UrlConverter extends JFrame implements ClipboardOwner {
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 		// TODO Auto-generated method stub
 
+	}
+
+	/** ActionEvent handler - Called back upon button-click. */
+	@Override
+	public void actionPerformed(ActionEvent evt) {
+
+		if (evt.getSource() == btnConvert) {
+			// removeAll(convertString());
+			modifyURL(returnRegex(), convertString());
+			setClipboardContents(tfNew_URL.getText()); // add the converted url to the clipboard
+			// Display the counter value on the TextField tfCount
+			// tfNew_URL.setText(new_URL);
+		} else if (evt.getSource() == btnAddRule) {
+			tfield = new JTextField(50);
+			tfield.setName(nameTField + count);
+			count++;
+			add(tfield);
+			revalidate(); // For JDK 1.7 or above.
+			repaint();
+		}
+	}
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+		try {
+			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
+			tfURL.setText(paste);
+
+		} catch (IOException error) {
+			System.out.println("Error" + error.getMessage());
+		} catch (UnsupportedFlavorException flavorexcept) {
+			System.out.println("Error" + flavorexcept.getMessage());
+		}
+	}
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+		System.exit(0); // Terminate the program
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {
+		// TODO Auto-generated method stub
+		getClipboardContents();
 	}
 }
