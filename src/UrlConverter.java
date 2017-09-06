@@ -421,6 +421,39 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return result;
 	}
 
+	public void checkClipboardContents() {
+		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+		String is_youtube_link_l = "youtube.com"; // youtube url long version
+		String is_youtube_link_s = "youtu.be";
+		try {
+			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
+			if(this.isActive()) {
+				if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
+						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
+					System.out.println("Youtube url detected, placing it in the textbox");
+					tfURL.setText(paste);
+				} else {
+					System.out.println("NON Youtube text detected, ignoring it");
+				}
+			} else {
+				if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
+						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
+					System.out.println("Youtube url detected, open the application window");
+					trayIcon.displayMessage("Youtube!", "Youtube link has been detected!", TrayIcon.MessageType.INFO);
+				} else {
+					System.out.println("NON Youtube text detected, ignoring it minimized");
+				}
+				
+			}
+			
+
+		} catch (IOException error) {
+			System.out.println("Error" + error.getMessage());
+		} catch (UnsupportedFlavorException flavorexcept) {
+			System.out.println("Error" + flavorexcept.getMessage());
+		}
+	}
+	
 	/**
 	 * Place a String on the clipboard, and make this class the owner of the
 	 * Clipboard's contents.
@@ -460,24 +493,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	@Override
 	public void windowActivated(WindowEvent arg0) {
 		// TODO Auto-generated method stub
-		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
-		String is_youtube_link_l = "youtube.com"; // youtube url long version
-		String is_youtube_link_s = "youtu.be";
-		try {
-			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
-			if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
-					|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
-				System.out.println("Youtube url detected, placing it in the textbox");
-				tfURL.setText(paste);
-			} else {
-				System.out.println("NON Youtube text detected, ignoring it");
-			}
-
-		} catch (IOException error) {
-			System.out.println("Error" + error.getMessage());
-		} catch (UnsupportedFlavorException flavorexcept) {
-			System.out.println("Error" + flavorexcept.getMessage());
-		}
+		checkClipboardContents();
 	}
 
 	@Override
@@ -534,16 +550,17 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		 * if (key == KeyEvent.VK_C && ke) { dx = -1; }
 		 */
 		// keysPressed.add(e.getKeyChar());
-		char keyChar = e.getKeyChar();
+/*		char keyChar = e.getKeyChar();
         if (keyChar == '?') {
             System.out.println("You typed 'a'");
-          }
+          }*/
 		
 		keysPressed.add(NativeKeyEvent.getKeyText(e.getKeyCode()));
 		if (keysPressed.size() > 1) {
 			// More than one key is currently pressed.
 			// Iterate over pressed to get the keys.
 			// displayAll(keysPressed);
+			checkClipboardContents();
 			Iterator<String> itr = keysPressed.iterator();
 			while (itr.hasNext()) {
 				String str = itr.next();
