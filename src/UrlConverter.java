@@ -2,7 +2,9 @@ import java.awt.AWTException;
 import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Label;
 import java.awt.MenuItem;
@@ -37,6 +39,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -131,7 +134,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		super("SystemTray test");
 		System.out.println("creating instance");
 
-		// initialize variables
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
 		count = 0;
 		nameTField = "tField";
 
@@ -139,6 +145,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		tfURL = new TextField(90); // construct TextField
 		tfNew_URL = new TextField(90); // construct TextField
 		tfNew_URL.setEditable(true); // set to read-only
+		
 
 		// initialize labels
 		urlInfo = new Label("Textfield below gets strings from your clipboard, when you copy a new string,"
@@ -174,19 +181,68 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnAddRule.addActionListener(this);
 		btnConvert.addActionListener(this); // Clicking Button (source object) fires an ActionEvent.
 
-		setLayout(new FlowLayout());
+		urlInfo.setFont(new Font("Serif", Font.PLAIN, 16));
+		//c.ipady = 20;      //make this component tall
+		//c.weightx = 0.0;
+		
+		c.gridx = 0; // column 0
+		c.gridy = 0; // row 0
+		c.gridwidth = 6;
+		panel.add(urlInfo, c);
+		
+		c.gridx = 0;
+		c.gridy = 1;
+		c.gridwidth = 1;
+		panel.add(lblURL, c);
+		
+		c.gridx = 2;
+		c.gridy = 1;
+		c.gridwidth = 3;
+		panel.add(tfURL, c);
+		
+		
+		c.gridx = 5;
+		c.gridy = 1;
+		c.gridwidth = 1;
+		panel.add(btnConvert, c);
+		
+		c.gridx = 0;
+		c.gridy = 2;
+		panel.add(lblNew_URL, c);
+		
+		c.gridx = 1;
+		c.gridy = 2;
+		panel.add(tfNew_URL, c);
+
+		c.gridx = 3;
+		c.gridy = 4;
+		panel.add(btnAddRule, c);
+		
+		c.gridx = 1;
+		c.gridy = 5;
+		panel.add(listInfo, c);
+		
+		c.gridx = 1;
+		c.gridy = 6;
+		panel.add(listInstructions, c);
+		
+		c.gridx = 1;
+		c.gridy = 7;
+		panel.add(listScroller, c);
+		
+		//setLayout(new FlowLayout());
 		// set the layout of the frame to FlowLayout, which arranges
 		// the components from left-to-right, and flow to next row from top-to-bottom.
-		add(lblURL); // add label to the frame
-		add(urlInfo);
-		add(tfURL); // Frame adds TextField
-		add(lblNew_URL); // Frame adds Label
-		add(tfNew_URL); // Frame adds TextField
-		add(btnConvert); // Frame adds Button
-		add(btnAddRule); // Add Rule button to the frame
-		add(listInfo);
-		add(listInstructions);
-		add(listScroller);
+		//add(urlInfo);
+		//add(lblURL); // add label to the frame
+		//add(tfURL); // Frame adds TextField
+		//add(lblNew_URL); // Frame adds Label
+		//add(tfNew_URL); // Frame adds TextField
+		//add(btnConvert); // Frame adds Button
+		//add(btnAddRule); // Add Rule button to the frame
+		//add(listInfo);
+		//add(listInstructions);
+		//add(listScroller);
 		addWindowListener(this);
 
 		// Disable parent logger and set the desired level.
@@ -283,8 +339,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		// Frame (source) fires WindowEvent.
 		// Frame adds "this" object as a WindowEvent listener.
 		setTitle("URL Converter"); // "super" Frame sets its title
-		setSize(700, 400); // "super" Frame sets its initial window size
-		getContentPane().setBackground(Color.DARK_GRAY);
+		
+		panel.setBackground(Color.DARK_GRAY);
+		//getContentPane().setBackground(Color.DARK_GRAY);
+		getContentPane().add(panel);
+		setSize(800, 500); // "super" Frame sets its initial window size
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true); // "super" Frame shows
 	}
