@@ -7,11 +7,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.Label;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
-import java.awt.TextField;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.awt.datatransfer.Clipboard;
@@ -26,6 +24,8 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,9 +38,15 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -65,7 +71,7 @@ import org.jnativehook.keyboard.NativeKeyListener;
  */
 
 /*
- * TIMESTAMPS https://youtu.be/xnER10j4ZBc?t=1m33s
+ * TIMESTAMPS https://youtu.be/xnER10j4ZBc?t=1m33s | https://www.youtube.com/watch?v=xnER10j4ZBc&feature=youtu.be
  * https://www.youtube.com/watch?v=xnER10j4ZBc&t=215
  * https://youtu.be/dT9eI40RNoQ?t=1h51m41s
  * (\&?\??t=\d*?[h]?\d*[m]?\d*[s]|\&t=\d*) should match either style of
@@ -94,15 +100,16 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private Label lblURL; // Declare component Label
-	private Label lblNew_URL; // Declare component Label
-	private Label listInstructions;
-	private Label listInfo;
-	private Label urlInfo;
-	private Label status;
+	private JLabel lblOperationMode;
+	private JLabel lblURL; // Declare component Label
+	private JLabel lblNewURL; // Declare component Label
+	private JLabel listInstructions;
+	private JLabel listInfo;
+	private JLabel urlInfo;
+	private JLabel status;
 
-	private TextField tfURL; // Declare component TextField
-	private TextField tfNew_URL; // Declare component TextField
+	private JTextField tfURL; // Declare component TextField
+	private JTextField tfNewURL; // Declare component TextField
 
 	private Button btnConvert; // Declare component Button
 	private Button btnAddRule; // Declare button for adding new textboxes for rules
@@ -124,6 +131,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private String nameTField;
 	private JList<String> choices;
 	private JScrollPane listScroller;
+	private Boolean autoMode;
+	private String conversionType;
+	private JRadioButton auto; 
+	private JRadioButton manual;
+	private ButtonGroup grpOperationMode;
+	Box operationModeBox;
 	TrayIcon trayIcon;
 	SystemTray tray;
 
@@ -143,25 +156,39 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		c.fill = GridBagConstraints.HORIZONTAL;
 		count = 0;
 		nameTField = "tField";
+		autoMode = true;
 
+		auto = new JRadioButton("Auto");
+		manual = new JRadioButton("Manual");
+		
+		operationModeBox = Box.createVerticalBox();
+		grpOperationMode = new ButtonGroup();
+		grpOperationMode.add(auto);
+		grpOperationMode.add(manual);
+		operationModeBox.add(auto);
+		operationModeBox.add(manual);
+		operationModeBox.setBorder(BorderFactory.createTitledBorder("Operation Mode"));
+		
 		// initialize textfields
-		tfURL = new TextField(90); // construct TextField
-		tfNew_URL = new TextField(90); // construct TextField
-		tfNew_URL.setEditable(true); // set to read-only
+		tfURL = new JTextField(90); // construct TextField
+		tfNewURL = new JTextField(90); // construct TextField
+		tfNewURL.setEditable(true); // set to read-only
 
 		// initialize labels
-		urlInfo = new Label(
+		lblOperationMode = new JLabel("Operation Mode:");
+		lblOperationMode.setForeground(Color.WHITE);
+		urlInfo = new JLabel(
 				"This application checks your clipboard contents and fills in the textbox below whenever you copy a new youtube url.");
 		urlInfo.setForeground(Color.WHITE);
-		lblURL = new Label("URL"); // construct Label
+		lblURL = new JLabel("URL"); // construct Label
 		lblURL.setForeground(Color.WHITE);
-		lblNew_URL = new Label("New URL"); // construct Label
-		lblNew_URL.setForeground(Color.WHITE);
-		listInstructions = new Label("Ctrl click to select more than one option");
+		lblNewURL = new JLabel("New URL"); // construct Label
+		lblNewURL.setForeground(Color.WHITE);
+		listInstructions = new JLabel("Ctrl click to select more than one option");
 		listInstructions.setForeground(Color.WHITE);
-		listInfo = new Label("Advanced settings, may give out unwanted results, proceed with caution");
+		listInfo = new JLabel("Advanced settings, may give out unwanted results, proceed with caution");
 		listInfo.setForeground(Color.WHITE);
-		status = new Label("Application events will be displayed here");
+		status = new JLabel("Application events will be displayed here");
 		status.setForeground(Color.WHITE);
 
 		// Initialise JList and its scroller
@@ -189,77 +216,96 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnAddRule.addActionListener(this);
 		btnConvert.addActionListener(this); // Clicking Button (source object) fires an ActionEvent.
 
+		lblOperationMode.setFont(new Font("Roboto", Font.PLAIN, 16));
 		urlInfo.setFont(new Font("Roboto", Font.PLAIN, 16));
 		lblURL.setFont(new Font("Roboto", Font.PLAIN, 16));
-		lblNew_URL.setFont(new Font("Roboto", Font.PLAIN, 16));
+		lblNewURL.setFont(new Font("Roboto", Font.PLAIN, 16));
 		listInstructions.setFont(new Font("Abel", Font.PLAIN, 16));
 		listInfo.setFont(new Font("Roboto", Font.PLAIN, 16));
 		status.setFont(new Font("Roboto", Font.PLAIN, 16));
 		btnConvert.setFont(new Font("Roboto", Font.PLAIN, 16));
 		btnAddRule.setFont(new Font("Roboto", Font.PLAIN, 16));
 		
-		// c.ipady = 20; //make this component tall
-		// c.weightx = 0.0;
+		addItem(panel, urlInfo, 0, 0, 4, 1, GridBagConstraints.SOUTH);
+		
+	    addItem(panel, lblURL, 0, 1, 1, 1, GridBagConstraints.EAST);
+	    addItem(panel, lblNewURL, 0, 2, 1, 1, GridBagConstraints.EAST);
 
+	    addItem(panel, tfURL, 1, 1, 2, 1, GridBagConstraints.WEST);
+	    addItem(panel, tfNewURL, 1, 2, 2, 1, GridBagConstraints.WEST);
+	    
+	    addItem(panel, status, 1, 3, 4, 1, GridBagConstraints.NORTH);
+
+/*		c.gridy = 0; // row 0
+		
 		c.insets = new Insets(20, 0, 0, 0);
-		c.gridx = 0; // column 0
-		c.gridy = 0; // row 0
+		c.gridx = 0; 
+		panel.add(operationModeBox, c);
+		
+		c.gridy += 1;
+		
+		c.insets = new Insets(10, 0, 0, 0);
+		c.gridx = 0;
 		c.gridwidth = 6;
 		panel.add(urlInfo, c);
 
+		c.gridy += 1;
+		
 		c.insets = new Insets(20, 0, 20, 0); // top padding
 		c.gridx = 0;
-		c.gridy = 1;
 		c.gridwidth = 1;
 		panel.add(lblURL, c);
 
 		c.gridx = 1;
-		c.gridy = 1;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridwidth = 2;
 		panel.add(tfURL, c);
 
 		c.gridx = 3;
-		c.gridy = 1;
 		c.insets = new Insets(20, 10, 20, 10); // top padding
 		c.fill = GridBagConstraints.NONE;
 		c.gridwidth = 1;
 		panel.add(btnConvert, c);
 
+		c.gridy += 1;
+		
 		c.insets = new Insets(0, 0, 20, 0); // top padding
 		c.gridx = 0;
-		c.gridy = 2;
-		panel.add(lblNew_URL, c);
+		panel.add(lblNewURL, c);
 
 		c.gridx = 1;
-		c.gridy = 2;
 		c.fill = GridBagConstraints.HORIZONTAL;
-		panel.add(tfNew_URL, c);
+		panel.add(tfNewURL, c);
 
+		c.gridy += 1;
+		
 		c.ipady = 5;
 		c.gridx = 0;
-		c.gridy = 3;
 		c.fill = GridBagConstraints.NONE;
 		panel.add(btnAddRule, c);
 
+		c.gridy += 1;
+		
 		c.insets = new Insets(0, 0, 0, 0); // top padding
 		c.ipady = 0;
 		c.gridx = 1;
-		c.gridy = 4;
 		panel.add(listInfo, c);
 
+		c.gridy += 1;
+		
 		c.gridx = 1;
-		c.gridy = 5;
 		panel.add(listInstructions, c);
 
+		c.gridy += 1;
+		
 		c.gridx = 1;
-		c.gridy = 6;
 		panel.add(listScroller, c);
 
+		c.gridy += 1;
+		
 		c.gridx = 0;
-		c.gridy = 7;
 		c.gridwidth = 6;
-		panel.add(status, c);
+		panel.add(status, c);*/
 
 		// setLayout(new FlowLayout());
 		// set the layout of the frame to FlowLayout, which arranges
@@ -387,6 +433,20 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setVisible(true); // "super" Frame shows
 	}
+	
+	  private void addItem(JPanel p, JComponent c, int x, int y, int width, int height, int align) {
+		    GridBagConstraints gc = new GridBagConstraints();
+		    gc.gridx = x;
+		    gc.gridy = y;
+		    gc.gridwidth = width;
+		    gc.gridheight = height;
+		    gc.weightx = 100.0;
+		    gc.weighty = 100.0;
+		    gc.insets = new Insets(5, 5, 5, 5);
+		    gc.anchor = align;
+		    gc.fill = GridBagConstraints.NONE;
+		    p.add(c, gc);
+		  }
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -417,7 +477,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			if (count == 1) {
 				convertedUrl = convertedString.substring(0, m.start()) + convertedString.substring(m.end());
 				;
-				tfNew_URL.setText(convertedUrl);
+				tfNewURL.setText(convertedUrl);
 			}
 		}
 	}
@@ -469,7 +529,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			count++;
 			if (count == 1) {
 				convertedUrl = convertedString.substring(0, m.start()) + convertedString.substring(m.end());
-				tfNew_URL.setText(convertedUrl);
+				tfNewURL.setText(convertedUrl);
+				appendHistoryLog(convertedUrl);
 			}
 		}
 	}
@@ -488,21 +549,19 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			count++;
 			if (count == 1) {
 				convertedUrl = new_URL.substring(0, m.start()) + new_URL.substring(m.end() + 1);
-				tfNew_URL.setText(convertedUrl);
+				tfNewURL.setText(convertedUrl);
 			}
 		}
 	}
 
-	public String convertString() {
-		String str_to_convert = tfURL.getText();
-		new_URL = str_to_convert.replace("watch?v=", "embed/");
-		tfNew_URL.setText(new_URL);
-		System.out.println(new_URL);
-		return new_URL;
-	}
-
-	public void appendHistoryLog() {
-		
+	public void appendHistoryLog(String convertedURL) {
+		String url_to_save = convertedURL + "\n";
+		try {
+			Files.write(Paths.get("history.txt"), url_to_save.getBytes());
+		} catch (IOException e) {
+			// tfNewURL
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -528,13 +587,24 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 		return result;
 	}
-
+	
+	public String convertString() {
+		String str_to_convert = tfURL.getText();
+		new_URL = str_to_convert.replace("watch?v=", "embed/");
+		tfNewURL.setText(new_URL);
+		System.out.println(new_URL);
+		return new_URL;
+	}
+	
 	public void checkClipboardContents() {
 		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
 		String is_youtube_link_l = "youtube.com"; // youtube url long version
 		String is_youtube_link_s = "youtu.be";
 		try {
 			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
+			if(paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
+				
+			}
 			if (this.isActive()) {
 				if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
 						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
@@ -586,7 +656,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		if (evt.getSource() == btnConvert) {
 			// removeAll(convertString());
 			modifyURL(returnRegex(), convertString());
-			setClipboardContents(tfNew_URL.getText());// add the converted url to the clipboard
+			setClipboardContents(tfNewURL.getText());// add the converted url to the clipboard
 			status.setText("Converted link has been placed in your clipboard");
 			// Display the counter value on the TextField tfCount
 			// tfNew_URL.setText(new_URL);
