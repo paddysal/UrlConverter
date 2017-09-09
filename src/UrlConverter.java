@@ -1,5 +1,6 @@
 import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -28,6 +29,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -115,6 +118,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JLabel listInfo;
 	private JLabel urlInfo;
 	private JLabel status;
+	private JLabel savedExplanation;
 
 	private JTextField tfURL; // Declare component TextField
 	private JTextField tfNewURL; // Declare component TextField
@@ -123,6 +127,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JButton btnSave;
 	private JButton btnAddRule; // Declare button for adding new textboxes for rules
 	private JButton btnSaveRule;
+	private JButton btnOpenUrl;
+	private JButton btnRemoveUrl;
 
 	private String new_URL; // New_URL value
 	private String convertedUrl;
@@ -140,8 +146,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JTextField tfNewRule;
 	private int count;
 	private String nameTField;
-	private JList<String> choices;
-	private JScrollPane listScroller;
+	private JList<String> regexChoices;
+	private JList<String> savedURLs;
+	private JScrollPane regexChoicesScroller;
+	private JScrollPane savedURLsScroller;
 	private Boolean autoMode;
 	private String conversionType;
 	private JRadioButton auto;
@@ -227,23 +235,40 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		listInstructions.setForeground(Color.WHITE);
 		listInfo = new JLabel("Advanced settings, may give out unwanted results, proceed with caution");
 		listInfo.setForeground(Color.WHITE);
+		savedExplanation = new JLabel("<html> <strong>Your Saved URLs</strong> <br>"
+				+ "Select the link you wish<br>"
+				+ "to open and then click <br>"
+				+ "the Open button to view <br>"
+				+ "it inside your browser");
+		savedExplanation.setForeground(Color.WHITE);
 		status = new JLabel("Application events will be displayed here");
 		status.setForeground(Color.YELLOW);
+		
+		// Initialise JLists and their corresponding scrollers
+		regexChoices = new JList<String>(data);
+		regexChoices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		regexChoices.setLayoutOrientation(JList.VERTICAL);
+		regexChoices.setVisibleRowCount(-1);
 
-		// Initialise JList and its scroller
-		choices = new JList<String>(data);
-		choices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		choices.setLayoutOrientation(JList.VERTICAL);
-		choices.setVisibleRowCount(-1);
+		System.out.println(fetchSaved().size());
+		String[] arr = new String[fetchSaved().size()];
+		populateArrayFromList(arr, fetchSaved());
+		savedURLs = new JList<String>(arr);
+		savedURLs.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		savedURLs.setLayoutOrientation(JList.VERTICAL);
+		savedURLs.setVisibleRowCount(-1);
 
 		int start = 0;
-		int end = choices.getModel().getSize() - 1;
-		if (end >= 0) {
-			choices.setSelectionInterval(start, end);
+		int regexChoicesEnd = regexChoices.getModel().getSize() - 1;
+		if (regexChoicesEnd >= 0) {
+			regexChoices.setSelectionInterval(start, regexChoicesEnd);
 		}
 
-		listScroller = new JScrollPane(choices);
-		listScroller.setPreferredSize(new Dimension(250, 80));
+		regexChoicesScroller = new JScrollPane(regexChoices);
+		regexChoicesScroller.setPreferredSize(new Dimension(250, 80));
+
+		savedURLsScroller = new JScrollPane(savedURLs);
+		savedURLsScroller.setPreferredSize(new Dimension(350, 120));
 
 		// initialize buttons
 		btnConvert = new JButton("Convert"); // construct Button
@@ -258,6 +283,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnSave.setForeground(Color.WHITE);
 		btnSave.setBackground(Color.DARK_GRAY);
 		btnSave.addActionListener(this);
+		btnOpenUrl = new JButton("Open Selected Url");
+		btnOpenUrl.setForeground(Color.WHITE);
+		btnOpenUrl.setBackground(Color.DARK_GRAY);
+		btnOpenUrl.addActionListener(this);
 
 		/*
 		 * btnSaveRule.setForeground(Color.WHITE);
@@ -272,10 +301,14 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		lblNewURL.setFont(new Font("Abel", Font.PLAIN, 16));
 		listInstructions.setFont(new Font("Abel", Font.PLAIN, 16));
 		listInfo.setFont(new Font("Abel", Font.PLAIN, 16));
+		savedExplanation.setFont(new Font("Abel", Font.PLAIN, 16));
 		status.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnConvert.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnAddRule.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnSave.setFont(new Font("Abel", Font.PLAIN, 16));
+		btnOpenUrl.setFont(new Font("Abel", Font.PLAIN, 16));
+		regexChoices.setFont(new Font("Abel", Font.PLAIN, 13));
+		savedURLs.setFont(new Font("Abel", Font.PLAIN, 13));
 		// btnSaveRule.setFont(new Font("Abel", Font.PLAIN, 16));
 
 		// listed based on the row number
@@ -291,15 +324,19 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		addItem(panel, btnSave, 2, 2, 1, 1, GridBagConstraints.WEST);
 
 		addItem(panel, listInstructions, 1, 3, 1, 1, GridBagConstraints.WEST);
-		addItem(panel, listScroller, 1, 3, 1, 1, GridBagConstraints.EAST);
+		addItem(panel, regexChoicesScroller, 1, 3, 1, 1, GridBagConstraints.EAST);
 
 		addItem(panel, lblOperationMode, 1, 4, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, operationModeBox, 1, 4, 1, 1, GridBagConstraints.EAST);
 
 		addItem(panel, addRuleExplanation, 1, 5, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, btnAddRule, 1, 5, 1, 1, GridBagConstraints.EAST);
+		
+		addItem(panel, savedExplanation, 1, 6, 1, 1, GridBagConstraints.WEST);
+		addItem(panel, savedURLsScroller, 1, 6, 1, 1, GridBagConstraints.CENTER);
+		addItem(panel, btnOpenUrl, 1, 6, 1, 1, GridBagConstraints.EAST);
 
-		addItem(panel, status, 1, 6, 4, 1, GridBagConstraints.WEST);
+		addItem(panel, status, 1, 7, 4, 1, GridBagConstraints.WEST);
 
 		// setLayout(new FlowLayout());
 		// set the layout of the frame to FlowLayout, which arranges
@@ -408,7 +445,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 		// Frame (source) fires WindowEvent.
 		// Frame adds "this" object as a WindowEvent listener.
-		setTitle("URL Converter"); // "super" Frame sets its title
+		setTitle("YouTube URL Converter"); // "super" Frame sets its title
 
 		panel.setBackground(Color.DARK_GRAY);
 		// getContentPane().setBackground(Color.DARK_GRAY);
@@ -443,14 +480,22 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		p.add(c, gc);
 	}
 
-	public void fetchHistory() {
+	private <T> void populateArrayFromList(T[] arr, ArrayList<T> arrayList) {
+		System.out.println("Array size " + arr.length);
+		System.out.println("ArrayList size " + arrayList.size());
+		for (int i = 0; i < arrayList.size(); i++) {
+			arr[i] = arrayList.get(i);
+		}
+	}
+
+	private static ArrayList<String> fetchSaved() {
 		Scanner s;
 		int count = 0;
-		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<String> savedList = new ArrayList<String>();
 		try {
-			s = new Scanner(new File("History.txt"));
+			s = new Scanner(new File("saved.txt"));
 			while (s.hasNext()) {
-				list.add(s.next());
+				savedList.add(s.next());
 				count += 1;
 			}
 			System.out.println("Number of converted urls fetched: " + count);
@@ -459,6 +504,26 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return savedList;
+	}
+
+	private static ArrayList<String> fetchHistory() {
+		Scanner s;
+		int count = 0;
+		ArrayList<String> historyList = new ArrayList<String>();
+		try {
+			s = new Scanner(new File("History.txt"));
+			while (s.hasNext()) {
+				historyList.add(s.next());
+				count += 1;
+			}
+			System.out.println("Number of converted urls fetched: " + count);
+			s.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return historyList;
 	}
 
 	public static void main(String[] args) {
@@ -505,7 +570,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		 * (IOException ex) { ex.printStackTrace(); }
 		 */
 
-		Object[] selectedIndexes = choices.getSelectedValuesList().toArray();
+		Object[] selectedIndexes = regexChoices.getSelectedValuesList().toArray();
 		Map<String, Integer> mappedIndexes = new HashMap<String, Integer>();
 		int counter = 0;
 		for (Object index : selectedIndexes) {
@@ -589,7 +654,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				while (scanner.hasNextLine()) {
 					System.out.println("inside of while loop");
 					String line = scanner.nextLine();
-					if(line.length() > 1) {
+					if (line.length() > 1) {
 						lineNum++;
 					}
 					System.out.println("in" + lineNum);
@@ -601,7 +666,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 						System.out.println("inside of if");
 						status.setText("Link already saved at line: " + lineNum);
 						break;
-					} else if (!scanner.hasNextLine()){
+					} else if (!scanner.hasNextLine()) {
 						try (FileWriter fw = new FileWriter("saved.txt", true);
 								BufferedWriter bw = new BufferedWriter(fw);
 								PrintWriter out = new PrintWriter(bw)) {
@@ -754,6 +819,21 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				appendSaved(tfNewURL.getText());
 			} else {
 				status.setText("Nothing to save!");
+			}
+		} else if (evt.getSource() == btnOpenUrl) {
+			if(Desktop.isDesktopSupported() && !savedURLs.isSelectionEmpty())
+			{
+			  try {
+				Desktop.getDesktop().browse(new URI(savedURLs.getSelectedValue()));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			} else {
+				status.setText("Please select an URL from the saved urls list");
 			}
 		} else if (evt.getSource() == auto) {
 			if (auto.isSelected()) {
