@@ -83,7 +83,8 @@ import org.jnativehook.keyboard.NativeKeyListener;
  * PLAYLISTS https://www.youtube.com/watch?v=c7nRTF2SowQ
  * https://www.youtube.com/watch?v=acXXyruMtaY&list=PLs1-
  * UdHIwbo5AZVWE4IKJuADxWpz7e-tw
- * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2 (\&list=[a-zA-Z 0-9 -]+\&?\index=?\d+?)
+ * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-
+ * UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2 (\&list=[a-zA-Z 0-9 -]+\&?\index=?\d+?)
  */
 
 /*
@@ -131,11 +132,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	private JTextField tfURL; // Declare component TextField
 	private JTextField tfNewURL; // Declare component TextField
+	private JTextField tfNewRuleName;
+	private JTextField tfNewRule;
 
 	private JButton btnConvert; // Declare component Button
 	private JButton btnSave;
 	private JButton btnAddRule; // Declare button for adding new textboxes for rules
-	private JButton btnSaveRule;
 	private JButton btnOpenUrl;
 	private JButton btnRemoveUrl;
 
@@ -143,34 +145,30 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private String convertedUrl;
 	private String[] data = { "Remove Everything", "Remove Time Stamp", "Remove Playlist", "Remove Feature" };
 
-	// REGEX patterns to match against provided url
-	//private static final String REGEX_REMOVE_TIME = "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*)";
-	// private static final String REGEX = "[&|?][t|l].*";
-	//private static final String REGEX = "\\?t.*|\\&t.*|\\&l.*|\\&f.*";
-	// private static final String REGEX_REMOVE_PLAYLIST = "(\\&list=[a-zA-Z 0-9
-	// -]+\\&?\\index=?\\d+?)";
-	// private static final String REGEX_MATCH_ALL =
-	// "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z 0-9 -]*)";
-	private JTextField tfNewRuleName;
-	private JTextField tfNewRule;
 	private JList<String> regexChoices;
 	private JList<String> savedURLs;
+
 	private JScrollPane regexChoicesScroller;
 	private JScrollPane savedURLsScroller;
-	private int selectedRegex;
-	private Boolean autoMode;
+
 	private JRadioButton auto;
 	private JRadioButton manual;
-	private ButtonGroup grpOperationMode;
+
 	private JPanel panel;
 	private JPanel panel1;
+
+	private int selectedRegex;
+	private Boolean autoMode;
+
+	private ButtonGroup grpOperationMode;
+
 	Box operationModeBox;
 	TrayIcon trayIcon;
 	SystemTray tray;
 	ImageIcon rBtnIconOff;
 	ImageIcon rBtnIconOn;
 	DefaultListModel<String> savedListModel;
-	
+
 	final JComponent[] ruleInputs;
 
 	// Set of currently pressed keys
@@ -187,19 +185,19 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		panel.setLayout(new GridBagLayout());
 		panel1 = new JPanel();
 		panel1.setLayout(new GridBagLayout());
-		
+
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		autoMode = false;
-		
+
 		UIManager.put("OptionPane.background", Color.DARK_GRAY);
 		UIManager.put("Panel.background", Color.DARK_GRAY);
-		
+
 		savedListModel = new DefaultListModel<String>();
-		
+
 		auto = new JRadioButton("Automatic");
 		manual = new JRadioButton("Manual");
-		
+
 		rBtnIconOff = new ImageIcon("off_state.png");
 		rBtnIconOn = new ImageIcon("on_state.png");
 
@@ -254,11 +252,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		lblListInstructions.setForeground(Color.WHITE);
 		lblListInformation = new JLabel("Advanced settings, may give out unwanted results, proceed with caution");
 		lblListInformation.setForeground(Color.WHITE);
-		lblSavedExplanation = new JLabel("<html> <strong>Your Saved URLs</strong> <br>"
-				+ "Select the link you wish<br>"
-				+ "to open and then click <br>"
-				+ "the Open button to view <br>"
-				+ "it inside your browser");
+		lblSavedExplanation = new JLabel("<html> <strong>Your Saved URLs</strong> <br>" + "Select the link you wish<br>"
+				+ "to open and then click <br>" + "the Open button to view <br>" + "it inside your browser");
 		lblSavedExplanation.setForeground(Color.WHITE);
 		lblRegexRuleName = new JLabel("Rule Name: ");
 		lblRegexRuleName.setForeground(Color.WHITE);
@@ -266,17 +261,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		lblRegexRule.setForeground(Color.WHITE);
 		lblStatus = new JLabel("Application events will be displayed here");
 		lblStatus.setForeground(Color.YELLOW);
-		
-		ruleInputs = new JComponent[] {
-				lblRegexRuleName,
-				tfNewRuleName,
-				lblRegexRule,
-		        tfNewRule
-		};
-		
+
+		ruleInputs = new JComponent[] { lblRegexRuleName, tfNewRuleName, lblRegexRule, tfNewRule };
+
 		// Initialise JLists and their corresponding scrollers
 		regexChoices = new JList<String>(data);
-		//regexChoices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		// regexChoices.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		regexChoices.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		regexChoices.setLayoutOrientation(JList.VERTICAL);
 		regexChoices.setVisibleRowCount(-1);
@@ -290,24 +280,25 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		savedURLs.setVisibleRowCount(-1);
 		savedURLs.setModel(savedListModel);
 
-/*		int start = 0;
-		int regexChoicesEnd = regexChoices.getModel().getSize() - 1;
-		if (regexChoicesEnd >= 0) {
-			regexChoices.setSelectionInterval(start, regexChoicesEnd);
-		}*/
+		/*
+		 * int start = 0; int regexChoicesEnd = regexChoices.getModel().getSize() - 1;
+		 * if (regexChoicesEnd >= 0) { regexChoices.setSelectionInterval(start,
+		 * regexChoicesEnd); }
+		 */
 		selectedRegex = 0;
 		regexChoices.setSelectedIndex(selectedRegex);
 		regexChoices.addListSelectionListener(new ListSelectionListener() {
 
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                	selectedRegex= regexChoices.getSelectedIndex();
-                	System.out.println("Selected regex" + regexChoices.getSelectedIndex() + " | " + regexChoices.getSelectedValue().toString());
-                }
-            }
-        });
-		
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				if (!e.getValueIsAdjusting()) {
+					selectedRegex = regexChoices.getSelectedIndex();
+					System.out.println("Selected regex" + regexChoices.getSelectedIndex() + " | "
+							+ regexChoices.getSelectedValue().toString());
+				}
+			}
+		});
+
 		regexChoicesScroller = new JScrollPane(regexChoices);
 		regexChoicesScroller.setPreferredSize(new Dimension(250, 80));
 
@@ -382,7 +373,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 		addItem(panel, lblAddRuleExplanation, 1, 5, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, btnAddRule, 1, 5, 1, 1, GridBagConstraints.EAST);
-		
+
 		addItem(panel, lblSavedExplanation, 1, 6, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, savedURLsScroller, 1, 6, 1, 1, GridBagConstraints.CENTER);
 		addItem(panel1, btnOpenUrl, 0, 0, 1, 1, GridBagConstraints.SOUTH);
@@ -599,7 +590,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			chosenRegex = "(\\&feature=youtu.be)";
 			break;
 		default:
-			chosenRegex = "\\?t.*|\\&t.*|\\&l.*|\\&f.*"; //alternative: (\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z 0-9 -]*)
+			chosenRegex = "\\?t.*|\\&t.*|\\&l.*|\\&f.*"; // alternative:
+															// (\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z
+															// 0-9 -]*)
 			break;
 		}
 		System.out.println(chosenRegex);
@@ -679,7 +672,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 
 	}
-	
+
 	public void removeSaved(String urlToRemove) {
 		File file = new File("saved.txt");
 		File temp = null;
@@ -695,14 +688,14 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		try {
 			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
 			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(temp), charset));
-			
+
 			for (String line; (line = reader.readLine()) != null;) {
 				line = line.replace(urlToRemove, "");
-				//String adjusted = line.replaceAll("(?m)^[ \t]*\r?\n", "");
-				//writer.println(line);
+				// String adjusted = line.replaceAll("(?m)^[ \t]*\r?\n", "");
+				// writer.println(line);
 				if (!line.isEmpty()) {
 					writer.println(line);
-					//writer.write("\n");
+					// writer.write("\n");
 				}
 			}
 		} catch (UnsupportedEncodingException | FileNotFoundException e1) {
@@ -721,7 +714,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			writer.close();
 			savedListModel.removeElement(urlToRemove);
 		}
-		
+
 		file.delete();
 		temp.renameTo(file);
 	}
@@ -754,7 +747,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			lblStatus.setText(e.toString());
 		}
 	}
-	
+
 	/**
 	 * Get the String residing on the clipboard.
 	 *
@@ -782,7 +775,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	public String convertString() {
 		String urlToConvert = tfURL.getText();
 		String is_youtube_link_s = "youtu.be";
-		if(urlToConvert.contains("watch?v=")) {
+		if (urlToConvert.contains("watch?v=")) {
 			new_URL = urlToConvert.replace("watch?v=", "embed/");
 		} else if (urlToConvert.contains(is_youtube_link_s)) {
 			new_URL = urlToConvert.replace("youtu.be", "youtube.com/embed");
@@ -814,11 +807,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 					System.out.println("Youtube url  detected, open the application window");
 					trayIcon.displayMessage("Youtube", "Youtube link has been detected!", TrayIcon.MessageType.INFO);
 				} else if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
-						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase()) && autoMode == true){
-					setClipboardContents(modifyURL(returnRegex(), convertString()));// add the converted url to the clipboard
+						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase()) && autoMode == true) {
+					setClipboardContents(modifyURL(returnRegex(), convertString()));// add the converted url to the
+																					// clipboard
 					System.out.println("Youtube url  detected, converted url placed in your clipboard");
-					trayIcon.displayMessage("Youtube", "Youtube link detected! Converted link in your clipboard", TrayIcon.MessageType.INFO);
-				}else {
+					trayIcon.displayMessage("Youtube", "Youtube link detected! Converted link in your clipboard",
+							TrayIcon.MessageType.INFO);
+				} else {
 					System.out.println("NON Youtube text detected, ignoring it minimized");
 				}
 
@@ -854,7 +849,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		if (evt.getSource() == btnConvert) {
 			// removeAll(convertString());
 			modifyURL(returnRegex(), convertString());
-			if(this.isActive() && autoMode == true) {
+			if (this.isActive() && autoMode == true) {
 				setClipboardContents(tfNewURL.getText());// add the converted url to the clipboard
 				lblStatus.setText("Conversion Complete. Converted link has been placed in your clipboard");
 			} else {
@@ -866,18 +861,16 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 			int result = JOptionPane.showConfirmDialog(null, ruleInputs, "New Regex Rule", JOptionPane.PLAIN_MESSAGE);
 			if (result == JOptionPane.OK_OPTION) {
-			    System.out.println("You entered " +
-			    		tfNewRuleName.getText() + ", " +
-			    		tfNewRule.getText());
-			    if(tfNewRuleName.getText().trim().length() > 1 && tfNewRule.getText().trim().length() > 1) {
-			    	saveRuleToFile(tfNewRuleName.getText(), tfNewRule.getText());
-			    	lblStatus.setText("Your rule has been saved successfully");
-			    } else {
-			    	lblStatus.setText("Something went wrong while attempting to save your rule");
-			    }
-			    
+				System.out.println("You entered " + tfNewRuleName.getText() + ", " + tfNewRule.getText());
+				if (tfNewRuleName.getText().trim().length() > 1 && tfNewRule.getText().trim().length() > 1) {
+					saveRuleToFile(tfNewRuleName.getText(), tfNewRule.getText());
+					lblStatus.setText("Your rule has been saved successfully");
+				} else {
+					lblStatus.setText("Something went wrong while attempting to save your rule");
+				}
+
 			} else {
-			    System.out.println("User canceled / closed the dialog, result = " + result);
+				System.out.println("User canceled / closed the dialog, result = " + result);
 			}
 		} else if (evt.getSource() == btnSave) {
 			if (tfNewURL.getText().length() > 0) {
@@ -886,24 +879,23 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				lblStatus.setText("Nothing to save!");
 			}
 		} else if (evt.getSource() == btnOpenUrl) {
-			if(Desktop.isDesktopSupported() && !savedURLs.isSelectionEmpty())
-			{
-			  try {
-				Desktop.getDesktop().browse(new URI(savedURLs.getSelectedValue()));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			if (Desktop.isDesktopSupported() && !savedURLs.isSelectionEmpty()) {
+				try {
+					Desktop.getDesktop().browse(new URI(savedURLs.getSelectedValue()));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (URISyntaxException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} else {
 				lblStatus.setText("Please select an URL from the saved urls list");
 			}
 		} else if (evt.getSource() == btnRemoveUrl) {
-			if(!savedURLs.isSelectionEmpty()) {
+			if (!savedURLs.isSelectionEmpty()) {
 				removeSaved(savedURLs.getSelectedValue());
-				//fetchSaved();
+				// fetchSaved();
 			}
 		} else if (evt.getSource() == auto) {
 			if (auto.isSelected()) {
@@ -913,7 +905,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				manual.setIcon(rBtnIconOff);
 				auto.repaint();
 				manual.repaint();
-			} 
+			}
 		} else if (evt.getSource() == manual) {
 			if (manual.isSelected()) {
 				autoMode = false;
