@@ -23,12 +23,18 @@ import java.awt.event.ActionListener; // Using AWT event classes and listener in
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -48,6 +54,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -156,11 +163,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JRadioButton manual;
 	private ButtonGroup grpOperationMode;
 	private JPanel panel;
+	private JPanel panel1;
 	Box operationModeBox;
 	TrayIcon trayIcon;
 	SystemTray tray;
 	ImageIcon rBtnIconOff;
 	ImageIcon rBtnIconOn;
+	DefaultListModel<String> savedListModel;
 
 	// Set of currently pressed keys
 	private final Set<String> keysPressed = new HashSet<String>();
@@ -174,12 +183,17 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 		panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
+		panel1 = new JPanel();
+		panel1.setLayout(new GridBagLayout());
+		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		count = 0;
 		nameTField = "tField";
 		autoMode = true;
 
+		savedListModel = new DefaultListModel<String>();
+		
 		auto = new JRadioButton("Automatic");
 		manual = new JRadioButton("Manual");
 
@@ -257,6 +271,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		savedURLs.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		savedURLs.setLayoutOrientation(JList.VERTICAL);
 		savedURLs.setVisibleRowCount(-1);
+		savedURLs.setModel(savedListModel);
 
 		int start = 0;
 		int regexChoicesEnd = regexChoices.getModel().getSize() - 1;
@@ -268,7 +283,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		regexChoicesScroller.setPreferredSize(new Dimension(250, 80));
 
 		savedURLsScroller = new JScrollPane(savedURLs);
-		savedURLsScroller.setPreferredSize(new Dimension(350, 120));
+		savedURLsScroller.setPreferredSize(new Dimension(325, 120));
 
 		// initialize buttons
 		btnConvert = new JButton("Convert"); // construct Button
@@ -287,6 +302,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnOpenUrl.setForeground(Color.WHITE);
 		btnOpenUrl.setBackground(Color.DARK_GRAY);
 		btnOpenUrl.addActionListener(this);
+		btnRemoveUrl = new JButton("Remove Selected Url");
+		btnRemoveUrl.setForeground(Color.WHITE);
+		btnRemoveUrl.setBackground(Color.DARK_GRAY);
+		btnRemoveUrl.addActionListener(this);
 
 		/*
 		 * btnSaveRule.setForeground(Color.WHITE);
@@ -307,6 +326,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnAddRule.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnSave.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnOpenUrl.setFont(new Font("Abel", Font.PLAIN, 16));
+		btnRemoveUrl.setFont(new Font("Abel", Font.PLAIN, 16));
 		regexChoices.setFont(new Font("Abel", Font.PLAIN, 13));
 		savedURLs.setFont(new Font("Abel", Font.PLAIN, 13));
 		// btnSaveRule.setFont(new Font("Abel", Font.PLAIN, 16));
@@ -334,7 +354,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		
 		addItem(panel, savedExplanation, 1, 6, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, savedURLsScroller, 1, 6, 1, 1, GridBagConstraints.CENTER);
-		addItem(panel, btnOpenUrl, 1, 6, 1, 1, GridBagConstraints.EAST);
+		addItem(panel1, btnOpenUrl, 0, 0, 1, 1, GridBagConstraints.SOUTH);
+		addItem(panel1, btnRemoveUrl, 0, 1, 1, 1, GridBagConstraints.NORTH);
+		addItem(panel, panel1, 1, 6, 1, 1, GridBagConstraints.EAST);
 
 		addItem(panel, status, 1, 7, 4, 1, GridBagConstraints.WEST);
 
@@ -448,6 +470,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		setTitle("YouTube URL Converter"); // "super" Frame sets its title
 
 		panel.setBackground(Color.DARK_GRAY);
+		panel1.setBackground(Color.DARK_GRAY);
 		// getContentPane().setBackground(Color.DARK_GRAY);
 		getContentPane().add(panel);
 		/*
@@ -484,6 +507,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.out.println("Array size " + arr.length);
 		System.out.println("ArrayList size " + arrayList.size());
 		for (int i = 0; i < arrayList.size(); i++) {
+			savedListModel.addElement(arrayList.get(i).toString());
 			arr[i] = arrayList.get(i);
 		}
 	}
@@ -673,6 +697,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 							System.out.println("inside of else");
 							out.println(convertedURL);
 							status.setText("Url successfully saved!");
+							savedListModel.addElement(convertedURL);
 						} catch (IOException e) {
 							status.setText(e.toString());
 						}
@@ -684,6 +709,52 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			status.setText(e.toString());
 		}
 
+	}
+	
+	public void removeSaved(String urlToRemove) {
+		File file = new File("saved.txt");
+		File temp = null;
+		try {
+			temp = File.createTempFile("file", ".txt", file.getParentFile());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		String charset = "UTF-8";
+		BufferedReader reader = null;
+		PrintWriter writer = null;
+		try {
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
+			writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(temp), charset));
+			
+			for (String line; (line = reader.readLine()) != null;) {
+				line = line.replace(urlToRemove, "");
+				//String adjusted = line.replaceAll("(?m)^[ \t]*\r?\n", "");
+				//writer.println(line);
+				if (!line.isEmpty()) {
+					writer.println(line);
+					//writer.write("\n");
+				}
+			}
+		} catch (UnsupportedEncodingException | FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			writer.close();
+			savedListModel.removeElement(urlToRemove);
+		}
+		
+		file.delete();
+		temp.renameTo(file);
 	}
 
 	public void appendHistoryLog(String convertedURL) {
@@ -834,6 +905,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			}
 			} else {
 				status.setText("Please select an URL from the saved urls list");
+			}
+		} else if (evt.getSource() == btnRemoveUrl) {
+			if(!savedURLs.isSelectionEmpty()) {
+				removeSaved(savedURLs.getSelectedValue());
+				//fetchSaved();
 			}
 		} else if (evt.getSource() == auto) {
 			if (auto.isSelected()) {
