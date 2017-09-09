@@ -158,7 +158,6 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JScrollPane regexChoicesScroller;
 	private JScrollPane savedURLsScroller;
 	private Boolean autoMode;
-	private String conversionType;
 	private JRadioButton auto;
 	private JRadioButton manual;
 	private ButtonGroup grpOperationMode;
@@ -190,7 +189,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		c.fill = GridBagConstraints.HORIZONTAL;
 		count = 0;
 		nameTField = "tField";
-		autoMode = true;
+		autoMode = false;
 
 		savedListModel = new DefaultListModel<String>();
 		
@@ -621,7 +620,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return chosenRegex;
 	}
 
-	public void modifyURL(String Regex, String convertedString) {
+	public String modifyURL(String Regex, String convertedString) {
 		Pattern p = Pattern.compile(Regex);
 		Matcher m = p.matcher(convertedString); // get a matcher object
 		convertedUrl = "";
@@ -635,6 +634,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				appendHistoryLog(convertedUrl);
 			}
 		}
+		return convertedUrl;
 	}
 
 	public void removeTime() {
@@ -799,8 +799,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	public String convertString() {
-		String str_to_convert = tfURL.getText();
-		new_URL = str_to_convert.replace("watch?v=", "embed/");
+		String urlToConvert = tfURL.getText();
+		String is_youtube_link_s = "youtu.be";
+		if(urlToConvert.contains("watch?v=")) {
+			new_URL = urlToConvert.replace("watch?v=", "embed/");
+		} else if (urlToConvert.contains(is_youtube_link_s)) {
+			new_URL = urlToConvert.replace("youtu.be", "youtube.com/embed");
+		}
 		tfNewURL.setText(new_URL);
 		System.out.println(new_URL);
 		return new_URL;
@@ -812,9 +817,6 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		String is_youtube_link_s = "youtu.be";
 		try {
 			String paste = (String) c.getContents(null).getTransferData(DataFlavor.stringFlavor);
-			if (paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
-
-			}
 			if (this.isActive()) {
 				if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
 						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
@@ -827,10 +829,15 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				}
 			} else {
 				if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
-						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase())) {
-					System.out.println("Youtube url while minimized detected, open the application window");
-					trayIcon.displayMessage("Youtube!", "Youtube link has been detected!", TrayIcon.MessageType.INFO);
-				} else {
+						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase()) && autoMode == false) {
+					System.out.println("Youtube url  detected, open the application window");
+					trayIcon.displayMessage("Youtube", "Youtube link has been detected!", TrayIcon.MessageType.INFO);
+				} else if (paste.toLowerCase().contains(is_youtube_link_l.toLowerCase())
+						|| paste.toLowerCase().contains(is_youtube_link_s.toLowerCase()) && autoMode == true){
+					setClipboardContents(modifyURL(returnRegex(), convertString()));// add the converted url to the clipboard
+					System.out.println("Youtube url  detected, converted url placed in your clipboard");
+					trayIcon.displayMessage("Youtube", "Youtube link detected! Converted link in your clipboard", TrayIcon.MessageType.INFO);
+				}else {
 					System.out.println("NON Youtube text detected, ignoring it minimized");
 				}
 
@@ -866,8 +873,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		if (evt.getSource() == btnConvert) {
 			// removeAll(convertString());
 			modifyURL(returnRegex(), convertString());
-			setClipboardContents(tfNewURL.getText());// add the converted url to the clipboard
-			status.setText("Converted link has been placed in your clipboard");
+			if(this.isActive() && autoMode == true) {
+				setClipboardContents(tfNewURL.getText());// add the converted url to the clipboard
+				status.setText("Conversion Complete. Converted link has been placed in your clipboard");
+			} else {
+				status.setText("Conversion Complete. Converted link has been placed in the appropriate text box");
+			}
 			// Display the counter value on the TextField tfCount
 			// tfNew_URL.setText(new_URL);
 		} else if (evt.getSource() == btnAddRule) {
@@ -913,27 +924,20 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			}
 		} else if (evt.getSource() == auto) {
 			if (auto.isSelected()) {
+				autoMode = true;
+				status.setText("Automatic mode activated successfully");
 				auto.setIcon(rBtnIconOn);
 				manual.setIcon(rBtnIconOff);
 				auto.repaint();
 				manual.repaint();
-			} else {
-				System.out.println("auto off clicked");
-				auto.setIcon(rBtnIconOff);
-				auto.repaint();
-				manual.setIcon(rBtnIconOn);
-				manual.repaint();
-			}
+			} 
 		} else if (evt.getSource() == manual) {
 			if (manual.isSelected()) {
+				autoMode = false;
+				status.setText("Manual mode activated successfully");
 				auto.setIcon(rBtnIconOff);
 				auto.repaint();
 				manual.setIcon(rBtnIconOn);
-				manual.repaint();
-			} else {
-				auto.setIcon(rBtnIconOn);
-				manual.setIcon(rBtnIconOff);
-				auto.repaint();
 				manual.repaint();
 			}
 		}
