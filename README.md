@@ -1,6 +1,5 @@
 # UrlConverter
-
-![Settings Window](https://raw.github.com/paddysal/UrlConverter/master/URLConverterPromo.png)
+![ScreenShot](https://raw.github.com/paddysal/UrlConverter/master/URLConverterPromo.png)
 
 Program for converting url's, by default works by modifying age restricted videos on youtube so that they can be viewed without signing in. This is because I very rarely sign in to youtube therefore I prefer to use this piece of code to see the video rather than search for my notepad with the password for youtube.
 
