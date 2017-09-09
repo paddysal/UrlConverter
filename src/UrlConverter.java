@@ -22,11 +22,12 @@ import java.awt.event.ActionListener; // Using AWT event classes and listener in
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -106,6 +108,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	 */
 	private static final long serialVersionUID = 1L;
 	private JLabel lblOperationMode;
+	private JLabel addRuleExplanation;
 	private JLabel lblURL; // Declare component Label
 	private JLabel lblNewURL; // Declare component Label
 	private JLabel listInstructions;
@@ -119,6 +122,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JButton btnConvert; // Declare component Button
 	private JButton btnSave;
 	private JButton btnAddRule; // Declare button for adding new textboxes for rules
+	private JButton btnSaveRule;
 
 	private String new_URL; // New_URL value
 	private String convertedUrl;
@@ -132,7 +136,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	// -]+\\&?\\index=?\\d+?)";
 	// private static final String REGEX_MATCH_ALL =
 	// "(\\&?\\??t=\\d*?[h]?\\d*[m]?\\d*[s]|\\&t=\\d*|\\&list=[a-zA-Z 0-9 -]*)";
-	private JTextField tfield;
+	private JTextField tfNewRuleName;
+	private JTextField tfNewRule;
 	private int count;
 	private String nameTField;
 	private JList<String> choices;
@@ -142,9 +147,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	private JRadioButton auto;
 	private JRadioButton manual;
 	private ButtonGroup grpOperationMode;
+	private JPanel panel;
 	Box operationModeBox;
 	TrayIcon trayIcon;
 	SystemTray tray;
+	ImageIcon rBtnIconOff;
+	ImageIcon rBtnIconOn;
 
 	// Set of currently pressed keys
 	private final Set<String> keysPressed = new HashSet<String>();
@@ -156,7 +164,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		super("SystemTray test");
 		System.out.println("creating instance");
 
-		JPanel panel = new JPanel();
+		panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -164,8 +172,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		nameTField = "tField";
 		autoMode = true;
 
-		auto = new JRadioButton("Auto");
+		auto = new JRadioButton("Automatic");
 		manual = new JRadioButton("Manual");
+
+		rBtnIconOff = new ImageIcon("off_state.png");
+		rBtnIconOn = new ImageIcon("on_state.png");
 
 		operationModeBox = Box.createVerticalBox();
 		grpOperationMode = new ButtonGroup();
@@ -173,11 +184,16 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		grpOperationMode.add(manual);
 		operationModeBox.add(auto);
 		operationModeBox.add(manual);
+		auto.setIcon(rBtnIconOff);
 		auto.setBackground(Color.DARK_GRAY);
 		auto.setForeground(Color.WHITE);
 		auto.setFont(new Font("Abel", Font.PLAIN, 16));
+		auto.addActionListener(this);
+		manual.setIcon(rBtnIconOn);
 		manual.setBackground(Color.DARK_GRAY);
 		manual.setForeground(Color.WHITE);
+		manual.setSelected(true);
+		manual.addActionListener(this);
 		manual.setFont(new Font("Abel", Font.PLAIN, 16));
 		operationModeBox.setForeground(Color.WHITE);
 		operationModeBox.setFont(new Font("Abel", Font.PLAIN, 16));
@@ -193,6 +209,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				"<html>Manual operation mode disables automatic replacing of your cliboard contents. Automatic<br>"
 						+ "mode auto converts all youtube urls detected including the ones detected in tray mode");
 		lblOperationMode.setForeground(Color.WHITE);
+		addRuleExplanation = new JLabel(
+				"<html>Pressing the Add Rule button will create two textboxes and a button. <br>"
+						+ "You are supposed to provide new rule name and it's corresponding regex pattern. ");
+		addRuleExplanation.setForeground(Color.WHITE);
 		urlInfo = new JLabel(
 				"This application checks your clipboard contents and fills in the textbox below whenever you copy a new youtube url.");
 		urlInfo.setForeground(Color.WHITE);
@@ -208,7 +228,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		listInfo = new JLabel("Advanced settings, may give out unwanted results, proceed with caution");
 		listInfo.setForeground(Color.WHITE);
 		status = new JLabel("Application events will be displayed here");
-		status.setForeground(Color.WHITE);
+		status.setForeground(Color.YELLOW);
 
 		// Initialise JList and its scroller
 		choices = new JList<String>(data);
@@ -234,12 +254,19 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		btnAddRule.setForeground(Color.WHITE);
 		btnAddRule.setBackground(Color.DARK_GRAY);
 		btnAddRule.addActionListener(this);
-		btnSave = new JButton("Add Rule");
+		btnSave = new JButton("Save");
 		btnSave.setForeground(Color.WHITE);
 		btnSave.setBackground(Color.DARK_GRAY);
 		btnSave.addActionListener(this);
 
+		/*
+		 * btnSaveRule.setForeground(Color.WHITE);
+		 * btnSaveRule.setBackground(Color.DARK_GRAY);
+		 * btnSaveRule.addActionListener(this);
+		 */
+
 		lblOperationMode.setFont(new Font("Abel", Font.PLAIN, 16));
+		addRuleExplanation.setFont(new Font("Abel", Font.PLAIN, 16));
 		urlInfo.setFont(new Font("Abel", Font.PLAIN, 16));
 		lblURL.setFont(new Font("Abel", Font.PLAIN, 16));
 		lblNewURL.setFont(new Font("Abel", Font.PLAIN, 16));
@@ -248,6 +275,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		status.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnConvert.setFont(new Font("Abel", Font.PLAIN, 16));
 		btnAddRule.setFont(new Font("Abel", Font.PLAIN, 16));
+		btnSave.setFont(new Font("Abel", Font.PLAIN, 16));
+		// btnSaveRule.setFont(new Font("Abel", Font.PLAIN, 16));
 
 		// listed based on the row number
 
@@ -259,7 +288,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 		addItem(panel, lblNewURL, 0, 2, 1, 1, GridBagConstraints.EAST);
 		addItem(panel, tfNewURL, 1, 2, 1, 1, GridBagConstraints.CENTER);
-		addItem(panel, btnAddRule, 2, 2, 1, 1, GridBagConstraints.WEST);
+		addItem(panel, btnSave, 2, 2, 1, 1, GridBagConstraints.WEST);
 
 		addItem(panel, listInstructions, 1, 3, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, listScroller, 1, 3, 1, 1, GridBagConstraints.EAST);
@@ -267,59 +296,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		addItem(panel, lblOperationMode, 1, 4, 1, 1, GridBagConstraints.WEST);
 		addItem(panel, operationModeBox, 1, 4, 1, 1, GridBagConstraints.EAST);
 
-		addItem(panel, status, 1, 5, 4, 1, GridBagConstraints.WEST);
+		addItem(panel, addRuleExplanation, 1, 5, 1, 1, GridBagConstraints.WEST);
+		addItem(panel, btnAddRule, 1, 5, 1, 1, GridBagConstraints.EAST);
 
-		/*
-		 * c.gridy = 0; // row 0
-		 * 
-		 * c.insets = new Insets(20, 0, 0, 0); c.gridx = 0; panel.add(operationModeBox,
-		 * c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.insets = new Insets(10, 0, 0, 0); c.gridx = 0; c.gridwidth = 6;
-		 * panel.add(urlInfo, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.insets = new Insets(20, 0, 20, 0); // top padding c.gridx = 0; c.gridwidth
-		 * = 1; panel.add(lblURL, c);
-		 * 
-		 * c.gridx = 1; c.fill = GridBagConstraints.HORIZONTAL; c.gridwidth = 2;
-		 * panel.add(tfURL, c);
-		 * 
-		 * c.gridx = 3; c.insets = new Insets(20, 10, 20, 10); // top padding c.fill =
-		 * GridBagConstraints.NONE; c.gridwidth = 1; panel.add(btnConvert, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.insets = new Insets(0, 0, 20, 0); // top padding c.gridx = 0;
-		 * panel.add(lblNewURL, c);
-		 * 
-		 * c.gridx = 1; c.fill = GridBagConstraints.HORIZONTAL; panel.add(tfNewURL, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.ipady = 5; c.gridx = 0; c.fill = GridBagConstraints.NONE;
-		 * panel.add(btnAddRule, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.insets = new Insets(0, 0, 0, 0); // top padding c.ipady = 0; c.gridx = 1;
-		 * panel.add(listInfo, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.gridx = 1; panel.add(listInstructions, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.gridx = 1; panel.add(listScroller, c);
-		 * 
-		 * c.gridy += 1;
-		 * 
-		 * c.gridx = 0; c.gridwidth = 6; panel.add(status, c);
-		 */
+		addItem(panel, status, 1, 6, 4, 1, GridBagConstraints.WEST);
 
 		// setLayout(new FlowLayout());
 		// set the layout of the frame to FlowLayout, which arranges
@@ -469,9 +449,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		ArrayList<String> list = new ArrayList<String>();
 		try {
 			s = new Scanner(new File("History.txt"));
-			while (s.hasNext()){
-			    list.add(s.next());
-			    count += 1;
+			while (s.hasNext()) {
+				list.add(s.next());
+				count += 1;
 			}
 			System.out.println("Number of converted urls fetched: " + count);
 			s.close();
@@ -480,7 +460,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -587,14 +567,77 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
+	public void appendSaved(String convertedURL) {
+
+		File file = new File("saved.txt");
+
+		try {
+			Scanner scanner = new Scanner(file);
+
+			// now read the file line by line...
+			int lineNum = 0;
+			if (!scanner.hasNextLine()) {
+
+				String url_to_save = convertedURL + "\n";
+				try (FileWriter fw = new FileWriter("saved.txt", true);
+						BufferedWriter bw = new BufferedWriter(fw);
+						PrintWriter out = new PrintWriter(bw)) {
+					status.setText("Blank file, adding your first link");
+					System.out.println("1");
+					out.println(url_to_save);
+				} catch (IOException e) {
+					// exception handling left as an exercise for the reader
+				}
+				/*
+				 * try { Files.write(Paths.get("saved.txt"), url_to_save.getBytes(),
+				 * StandardOpenOption.APPEND); status.setText("Url successfully saved!"); }
+				 * catch (IOException e) { // tfNewURL e.printStackTrace(); }
+				 */
+			} else {
+				while (scanner.hasNextLine()) {
+					System.out.println("in");
+					String line = scanner.nextLine();
+					lineNum++;
+					System.out.println("in" + lineNum);
+					if (line.equals(convertedURL)) {
+						status.setText("Link already saved at line: " + lineNum);
+						break;
+					} else {
+						String url_to_save = convertedURL;
+						try (FileWriter fw = new FileWriter("saved.txt", true);
+								BufferedWriter bw = new BufferedWriter(fw);
+								PrintWriter out = new PrintWriter(bw)) {
+							out.println(url_to_save);
+							status.setText("Url successfully saved!");
+						} catch (IOException e) {
+							status.setText(e.toString());
+						}
+					}
+				}
+			}
+			scanner.close();
+		} catch (FileNotFoundException e) {
+			status.setText(e.toString());
+		}
+
+	}
+
 	public void appendHistoryLog(String convertedURL) {
 		String url_to_save = convertedURL + "\n";
-		try {
-			Files.write(Paths.get("history.txt"), url_to_save.getBytes());
+		try (FileWriter fw = new FileWriter("history.txt", true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(url_to_save);
+			status.setText("Url successfully saved!");
+		} catch (IOException e) {
+			status.setText(e.toString());
+		}
+/*		try {
+			Files.write(Paths.get("history.txt"), url_to_save.getBytes(), StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			// tfNewURL
 			e.printStackTrace();
-		}
+		}*/
 	}
 
 	/**
@@ -694,12 +737,51 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			// Display the counter value on the TextField tfCount
 			// tfNew_URL.setText(new_URL);
 		} else if (evt.getSource() == btnAddRule) {
-			tfield = new JTextField(50);
-			tfield.setName(nameTField + count);
+			tfNewRuleName = new JTextField(10);
+			tfNewRule = new JTextField(10);
+			btnSaveRule = new JButton("Save");
+			btnSaveRule.setName(nameTField + count);
+			tfNewRuleName.setName(nameTField + count);
+			tfNewRule.setName(nameTField + count);
 			count++;
-			add(tfield);
+
+			addItem(panel, tfNewRuleName, 1, 7, 1, 1, GridBagConstraints.WEST);
+			addItem(panel, tfNewRule, 1, 7, 1, 1, GridBagConstraints.CENTER);
+			addItem(panel, btnSaveRule, 1, 7, 1, 1, GridBagConstraints.EAST);
+			// add(tfield);
 			revalidate(); // For JDK 1.7 or above.
 			repaint();
+		} else if (evt.getSource() == btnSave) {
+			if (tfNewURL.getText().length() > 0) {
+				appendSaved(tfNewURL.getText());
+			} else {
+				status.setText("Nothing to save!");
+			}
+		} else if (evt.getSource() == auto) {
+			if (auto.isSelected()) {
+				auto.setIcon(rBtnIconOn);
+				manual.setIcon(rBtnIconOff);
+				auto.repaint();
+				manual.repaint();
+			} else {
+				System.out.println("auto off clicked");
+				auto.setIcon(rBtnIconOff);
+				auto.repaint();
+				manual.setIcon(rBtnIconOn);
+				manual.repaint();
+			}
+		} else if (evt.getSource() == manual) {
+			if (manual.isSelected()) {
+				auto.setIcon(rBtnIconOff);
+				auto.repaint();
+				manual.setIcon(rBtnIconOn);
+				manual.repaint();
+			} else {
+				auto.setIcon(rBtnIconOn);
+				manual.setIcon(rBtnIconOff);
+				auto.repaint();
+				manual.repaint();
+			}
 		}
 	}
 
