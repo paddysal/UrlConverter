@@ -573,41 +573,40 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 		try {
 			Scanner scanner = new Scanner(file);
-
-			// now read the file line by line...
 			int lineNum = 0;
-			if (!scanner.hasNextLine()) {
 
-				String url_to_save = convertedURL + "\n";
+			if (file.exists() && !scanner.hasNextLine()) {
 				try (FileWriter fw = new FileWriter("saved.txt", true);
 						BufferedWriter bw = new BufferedWriter(fw);
 						PrintWriter out = new PrintWriter(bw)) {
 					status.setText("Blank file, adding your first link");
-					System.out.println("1");
-					out.println(url_to_save);
+					System.out.println("inside of negative");
+					out.println(convertedURL);
 				} catch (IOException e) {
-					// exception handling left as an exercise for the reader
+					status.setText(e.toString());
 				}
-				/*
-				 * try { Files.write(Paths.get("saved.txt"), url_to_save.getBytes(),
-				 * StandardOpenOption.APPEND); status.setText("Url successfully saved!"); }
-				 * catch (IOException e) { // tfNewURL e.printStackTrace(); }
-				 */
 			} else {
 				while (scanner.hasNextLine()) {
-					System.out.println("in");
+					System.out.println("inside of while loop");
 					String line = scanner.nextLine();
-					lineNum++;
+					if(line.length() > 1) {
+						lineNum++;
+					}
 					System.out.println("in" + lineNum);
+					System.out.println("line" + line.toString());
+					System.out.println("converted" + convertedURL);
+					System.out.println("line length" + line.length());
+					System.out.println("converted length" + convertedURL.length());
 					if (line.equals(convertedURL)) {
+						System.out.println("inside of if");
 						status.setText("Link already saved at line: " + lineNum);
 						break;
-					} else {
-						String url_to_save = convertedURL;
+					} else if (!scanner.hasNextLine()){
 						try (FileWriter fw = new FileWriter("saved.txt", true);
 								BufferedWriter bw = new BufferedWriter(fw);
 								PrintWriter out = new PrintWriter(bw)) {
-							out.println(url_to_save);
+							System.out.println("inside of else");
+							out.println(convertedURL);
 							status.setText("Url successfully saved!");
 						} catch (IOException e) {
 							status.setText(e.toString());
@@ -632,12 +631,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		} catch (IOException e) {
 			status.setText(e.toString());
 		}
-/*		try {
-			Files.write(Paths.get("history.txt"), url_to_save.getBytes(), StandardOpenOption.APPEND);
-		} catch (IOException e) {
-			// tfNewURL
-			e.printStackTrace();
-		}*/
+		/*
+		 * try { Files.write(Paths.get("history.txt"), url_to_save.getBytes(),
+		 * StandardOpenOption.APPEND); } catch (IOException e) { // tfNewURL
+		 * e.printStackTrace(); }
+		 */
 	}
 
 	/**
