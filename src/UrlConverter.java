@@ -75,37 +75,30 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
+// TODO: Auto-generated Javadoc
 /**
+ * The Class UrlConverter.
+ *
  * @author Patryk Salek
+ * @version 1.0.0.0
+ * @category Utilities
  */
 
 /*
- * PLAYLISTS https://www.youtube.com/watch?v=c7nRTF2SowQ
+ * PLAYLISTS 
+ * https://www.youtube.com/watch?v=c7nRTF2SowQ
  * https://www.youtube.com/watch?v=acXXyruMtaY&list=PLs1-
  * UdHIwbo5AZVWE4IKJuADxWpz7e-tw
- * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-
- * UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2 (\&list=[a-zA-Z 0-9 -]+\&?\index=?\d+?)
+ * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2
  */
 
 /*
- * TIMESTAMPS https://youtu.be/xnER10j4ZBc?t=1m33s |
+ * TIMESTAMPS 
+ * https://youtu.be/xnER10j4ZBc?t=1m33s
  * https://www.youtube.com/watch?v=xnER10j4ZBc&feature=youtu.be
  * https://www.youtube.com/watch?v=xnER10j4ZBc&t=215
  * https://youtu.be/dT9eI40RNoQ?t=1h51m41s
- * (\&?\??t=\d*?[h]?\d*[m]?\d*[s]|\&t=\d*) should match either style of
- * timestamp
- */
-
-// \?t|\&t|\&l
-// \?t.*|\&t.*|\&l.*
-// [&|?][t|l].*
-
-/*
- * COMBINED (\&?\??t=\d*?[h]?\d*[m]?\d+[s]|\&t=\d*|\&list=[a-zA-Z 0-9 -]+)
- */
-
-/*
- * &feature=youtu.be
+ * 
  */
 
 /*
@@ -114,73 +107,153 @@ import org.jnativehook.keyboard.NativeKeyListener;
  */
 
 public class UrlConverter extends JFrame implements ClipboardOwner, ActionListener, WindowListener, NativeKeyListener {
-	/**
-	 * 
-	 */
+	
+	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
+	
+	/** The operation mode  JLabel component. */
 	private JLabel lblOperationMode;
+	
+	/** The add rule explanation JLabel component. */
 	private JLabel lblAddRuleExplanation;
-	private JLabel lblURL; // Declare component Label
-	private JLabel lblNewURL; // Declare component Label
+	
+	/** The URL JLabel component. */
+	private JLabel lblURL; 
+	
+	/** The new URL JLabel component. */
+	private JLabel lblNewURL;
+	
+	/** The list instructions JLabel component. */
 	private JLabel lblListInstructions;
+	
+	/** The list information JLabel component. */
 	private JLabel lblListInformation;
+	
+	/**  JLabel component displayed at the top of the application window. */
 	private JLabel lblUrlInformation;
+	
+	/**  JLabel component used for displaying status of some application events. */
 	private JLabel lblStatus;
+	
+	/** JLabel component used for displaying explanation for the JList with stored URLs. */
 	private JLabel lblSavedExplanation;
+	
+	/** The REGEX rule name  JLabel component. */
 	private JLabel lblRegexRuleName;
+	
+	/** The REGEX rule JLabel component. */
 	private JLabel lblRegexRule;
 
-	private JTextField tfURL; // Declare component TextField
-	private JTextField tfNewURL; // Declare component TextField
+	/** JTextField component used to display YouTube URL before conversion. */
+	private JTextField tfURL;
+	
+	/** JTextField component used to display the YouTube URL after conversion*/
+	private JTextField tfNewURL;
+	
+	/** JTextField component used to capture new REGEX pattern name. */
 	private JTextField tfNewRuleName;
+	
+	/** JTextField component used to capture new REGEX pattern. */
 	private JTextField tfNewRule;
 
-	private JButton btnConvert; // Declare component Button
+	/** JButton component used for initializing URL conversion process 
+	 * while the application window is in the active mode. */
+	private JButton btnConvert;
+	
+	/** JButton component used for calling the save converted URL event. */
 	private JButton btnSave;
-	private JButton btnAddRule; // Declare button for adding new textboxes for rules
+	
+	/** JButton component used for opening JOptionPane in which new REGEX pattern rule details 
+	 * are collected and saved in a regex.txt text file. */
+	private JButton btnAddRule;
+	
+	/** JButton component used for opening selected URL within the savedURLs JList. */
 	private JButton btnOpenUrl;
+	
+	/** JButton component used for removing unwanted URLs from the saved URL's text file. */
 	private JButton btnRemoveUrl;
 
-	private String new_URL; // New_URL value
+	/** Variable used to store the value of the new URL in one of the methods. */
+	private String new_URL;
+	
+	/** Variable used to store the value of the converted URL. */
 	private String convertedUrl;
+	
+	/** An Array of Strings containing names for default REGEX patterns for the application. */
 	private String[] data = { "Remove Everything", "Remove Time Stamp", "Remove Playlist", "Remove Feature" };
 
+	/** JList used to store REGEX Pattern choices. */
 	private JList<String> regexChoices;
+	
+	/** JList used to store saved URL's. */
 	private JList<String> savedURLs;
 
+	/** ListScroller for the list of available regex's. */
 	private JScrollPane regexChoicesScroller;
+	
+	/** ListScroller for the saved URL's list. */
 	private JScrollPane savedURLsScroller;
 
+	/** The auto mode JRadioButton. */
 	private JRadioButton auto;
+	
+	/** The manual mode JRadioButton. */
 	private JRadioButton manual;
 
+	/** Main panel used to store all of the other components. */
 	private JPanel panel;
+	
+	/** Additional panel used to store buttons for managing saved YouTube URLs. */
 	private JPanel panel1;
 
+	/** Variable used for processing the detected YouTube URLs based on its value.
+	 * By default it's value is set to 0. */
 	private int selectedRegex;
+	
+	/** Variable for storing state of operation for the application. 
+	 * By default set to false. */
 	private Boolean autoMode;
 
+	/** The ButtonGroup to store operation mode JRadioBoxes. */
 	private ButtonGroup grpOperationMode;
 
+	/** The operation mode box used to store automatic and manual 
+	 * radio buttons via GroupBox above. 
+	*/
 	Box operationModeBox;
+	
+	/** TrayIcon used to store the icon for the application. */
 	TrayIcon trayIcon;
+	
+	/** Tray used for allocating the application to the system tray while in minimised mode. */
 	SystemTray tray;
+	
+	/** ImageIcon for the OFF state for either of the operation modes. */
 	ImageIcon rBtnIconOff;
+	
+	/** ImageIcon for the ON state for either of the operation modes. */
 	ImageIcon rBtnIconOn;
+	
+	/** The saved list model. */
 	DefaultListModel<String> savedListModel;
 
+	/** The rule inputs JComponent collection. */
 	final JComponent[] ruleInputs;
 
-	// Set of currently pressed keys
+	/** The keys pressed variable used to store set of currently pressed keys. */
 	private final Set<String> keysPressed = new HashSet<String>();
 
-	/** Logging */
+	/**  Logging. */
 	private static final Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
 
+	/**
+	 * Instantiates a new URL converter.
+	 */
 	UrlConverter() {
 		super("SystemTray test");
 		System.out.println("creating instance");
 
+		//Initialise Panels
 		panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
 		panel1 = new JPanel();
@@ -190,17 +263,22 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		c.fill = GridBagConstraints.HORIZONTAL;
 		autoMode = false;
 
+		//change the background colors of all panels and optionpanes
 		UIManager.put("OptionPane.background", Color.DARK_GRAY);
 		UIManager.put("Panel.background", Color.DARK_GRAY);
 
+		//Initialise ListModel
 		savedListModel = new DefaultListModel<String>();
 
+		//Initialise RadioButtons
 		auto = new JRadioButton("Automatic");
 		manual = new JRadioButton("Manual");
 
+		//Initialise ImageIcons
 		rBtnIconOff = new ImageIcon("off_state.png");
 		rBtnIconOn = new ImageIcon("on_state.png");
 
+		//Initialise GroupBox with radio buttons
 		operationModeBox = Box.createVerticalBox();
 		grpOperationMode = new ButtonGroup();
 		grpOperationMode.add(auto);
@@ -222,14 +300,14 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		operationModeBox.setFont(new Font("Abel", Font.PLAIN, 16));
 		operationModeBox.setBorder(BorderFactory.createTitledBorder("Mode"));
 
-		// initialize textfields
+		//Initialise JTestFields
 		tfURL = new JTextField(60); // construct TextField
 		tfNewURL = new JTextField(60); // construct TextField
 		tfNewURL.setEditable(true); // set to read-only
 		tfNewRuleName = new JTextField();
 		tfNewRule = new JTextField();
 
-		// initialize labels
+		//Initialise JLabels
 		lblOperationMode = new JLabel(
 				"<html>Manual operation mode disables automatic replacing of your cliboard contents. Automatic<br>"
 						+ "mode auto converts all youtube urls detected including the ones detected in tray mode");
@@ -262,6 +340,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		lblStatus = new JLabel("Application events will be displayed here");
 		lblStatus.setForeground(Color.YELLOW);
 
+		//Initialise an array of JComponents used in the JOptionPane
 		ruleInputs = new JComponent[] { lblRegexRuleName, tfNewRuleName, lblRegexRule, tfNewRule };
 
 		// Initialise JLists and their corresponding scrollers
@@ -285,6 +364,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		 * if (regexChoicesEnd >= 0) { regexChoices.setSelectionInterval(start,
 		 * regexChoicesEnd); }
 		 */
+		
 		selectedRegex = 0;
 		regexChoices.setSelectedIndex(selectedRegex);
 		regexChoices.addListSelectionListener(new ListSelectionListener() {
@@ -392,6 +472,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		handler.setLevel(Level.WARNING);
 		logger.addHandler(handler);
 
+		/** Try and set the look and feel of the application */
 		try {
 			System.out.println("setting look and feel");
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -426,6 +507,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		} else {
 			System.out.println("system tray not supported");
 		}
+		/** Frame adds "this" object as a WindowStateEvent listener. */
 		addWindowStateListener(new WindowStateListener() {
 			public void windowStateChanged(WindowEvent e) {
 
@@ -465,21 +547,14 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 				}
 			}
 		});
-		// Path tray_icon = Paths.get(System.getProperty("user.home"),"My
-		// Documents\\UrlConverter", "Pinwheel-48.png");
-		// String tray_icon_str = tray_icon.toString();
+
+		/** Set the icon for the application */
 		setIconImage(Toolkit.getDefaultToolkit().getImage("Pinwheel-48.png"));
-
-		// trayIcon.displayMessage("Tester!", "Some action performed",
-		// TrayIcon.MessageType.INFO)
-
-		// Frame (source) fires WindowEvent.
-		// Frame adds "this" object as a WindowEvent listener.
-		setTitle("YouTube URL Converter"); // "super" Frame sets its title
+		/** "super" Frame sets its title */
+		setTitle("YouTube URL Converter"); 
 
 		panel.setBackground(Color.DARK_GRAY);
 		panel1.setBackground(Color.DARK_GRAY);
-		// getContentPane().setBackground(Color.DARK_GRAY);
 		getContentPane().add(panel);
 		/*
 		 * Do not use setSize() of JFrame. This will cause abnormal behaviour. Instead,
@@ -497,6 +572,17 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		fetchHistory();
 	}
 
+	/**
+	 * Adds the item to the panel specified.
+	 *
+	 * @param p the p
+	 * @param c the c
+	 * @param x the x
+	 * @param y the y
+	 * @param width the width
+	 * @param height the height
+	 * @param align the align
+	 */
 	private void addItem(JPanel p, JComponent c, int x, int y, int width, int height, int align) {
 		GridBagConstraints gc = new GridBagConstraints();
 		gc.gridx = x;
@@ -511,6 +597,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		p.add(c, gc);
 	}
 
+	/**
+	 * Populate array from list.
+	 *
+	 * @param <T> the generic type
+	 * @param arr the arr
+	 * @param arrayList the array list
+	 */
 	private <T> void populateArrayFromList(T[] arr, ArrayList<T> arrayList) {
 		System.out.println("Array size " + arr.length);
 		System.out.println("ArrayList size " + arrayList.size());
@@ -520,6 +613,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
+	/**
+	 * Fetch saved URLs from a text file.
+	 *
+	 * @return the array list
+	 */
 	private static ArrayList<String> fetchSaved() {
 		Scanner s;
 		int count = 0;
@@ -539,6 +637,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return savedList;
 	}
 
+	/**
+	 * Fetch history of converted URLs stored in a text file.
+	 *
+	 * @return the array list
+	 */
 	private static ArrayList<String> fetchHistory() {
 		Scanner s;
 		int count = 0;
@@ -558,6 +661,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return historyList;
 	}
 
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
@@ -576,6 +684,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		});
 	}
 
+	/**
+	 * Return REGEX method used to for choosing REGEX pattern to be used for URL conversion.
+	 *
+	 * @return the string
+	 */
 	public String returnRegex() {
 		String chosenRegex;
 		System.out.println("selectedRegex value is: " + selectedRegex);
@@ -599,6 +712,13 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return chosenRegex;
 	}
 
+	/**
+	 * Modify URL method for converting captured YouTube URLs.
+	 *
+	 * @param Regex the regex
+	 * @param convertedString the converted string
+	 * @return the string
+	 */
 	public String modifyURL(String Regex, String convertedString) {
 		Pattern p = Pattern.compile(Regex);
 		Matcher m = p.matcher(convertedString); // get a matcher object
@@ -618,6 +738,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return convertedUrl;
 	}
 
+	/**
+	 * Append saved method used for storing the specified URL in a text file.
+	 *
+	 * @param convertedURL the converted URL
+	 */
 	public void appendSaved(String convertedURL) {
 
 		File file = new File("saved.txt");
@@ -673,6 +798,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	}
 
+	/**
+	 * Removes the specified saved URL from the text file.
+	 *
+	 * @param urlToRemove the url to remove
+	 */
 	public void removeSaved(String urlToRemove) {
 		File file = new File("saved.txt");
 		File temp = null;
@@ -719,6 +849,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		temp.renameTo(file);
 	}
 
+	/**
+	 * Append history log with the successfully converted URL.
+	 *
+	 * @param convertedURL the converted URL
+	 */
 	public void appendHistoryLog(String convertedURL) {
 		String url_to_save = convertedURL + "\n";
 		try (FileWriter fw = new FileWriter("history.txt", true);
@@ -736,6 +871,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		 */
 	}
 
+	/**
+	 * Save rule to file.
+	 *
+	 * @param ruleName the rule name
+	 * @param ruleContents the rule contents
+	 */
 	public void saveRuleToFile(String ruleName, String ruleContents) {
 		String ruleToSave = ruleName + "," + ruleContents + "\n";
 		try (FileWriter fw = new FileWriter("regex.txt", true);
@@ -772,6 +913,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return result;
 	}
 
+	/**
+	 * Convert parts of the URL that are always the same to some other that is required.
+	 *
+	 * @return the string
+	 */
 	public String convertString() {
 		String urlToConvert = tfURL.getText();
 		String is_youtube_link_s = "youtu.be";
@@ -785,6 +931,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		return new_URL;
 	}
 
+	/**
+	 * Check clipboard contents while minimised and maximised.
+	 */
 	public void checkClipboardContents() {
 		Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
 		String is_youtube_link_l = "youtube.com"; // youtube url long version
@@ -829,6 +978,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Place a String on the clipboard, and make this class the owner of the
 	 * Clipboard's contents.
+	 *
+	 * @param aString the new clipboard contents
 	 */
 	public void setClipboardContents(String aString) {
 		StringSelection stringSelection = new StringSelection(aString);
@@ -836,13 +987,20 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		clipboard.setContents(stringSelection, this);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
+	 */
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
 		// TODO Auto-generated method stub
 
 	}
 
-	/** ActionEvent handler - Called back upon button-click. */
+	/**
+	 *  ActionEvent handler - Called back upon button-click.
+	 *
+	 * @param evt the evt
+	 */
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 
@@ -918,48 +1076,73 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowActivated(WindowEvent arg0) {
 		// TODO Auto-generated method stub
 		checkClipboardContents();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosed(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosing(WindowEvent e) {
 		// TODO Auto-generated method stub
 		System.exit(0); // Terminate the program
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeactivated(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowDeiconified(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowIconified(WindowEvent e) {
 		// TODO Auto-generated method stub
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowOpened(WindowEvent e) {
 		// TODO Auto-generated method stub
-		// checkClipboardContents();
 	}
 
+	/**
+	 * Display all.
+	 *
+	 * @param col the col
+	 */
 	static void displayAll(Collection<Character> col) {
 		Iterator<Character> itr = col.iterator();
 		while (itr.hasNext()) {
@@ -969,6 +1152,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.out.println();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyPressed(org.jnativehook.keyboard.NativeKeyEvent)
+	 */
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent e) {
 		// TODO Auto-generated method stub
@@ -1010,6 +1196,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyReleased(org.jnativehook.keyboard.NativeKeyEvent)
+	 */
 	@Override
 	public void nativeKeyReleased(NativeKeyEvent e) {
 		// TODO Auto-generated method stub
@@ -1018,6 +1207,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.out.print(keysPressed.size() + " released \n");
 	}
 
+	/* (non-Javadoc)
+	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyTyped(org.jnativehook.keyboard.NativeKeyEvent)
+	 */
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent e) {
 		// TODO Auto-generated method stub
