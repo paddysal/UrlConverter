@@ -75,6 +75,8 @@ import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
+import resources.ResourceLoader;
+
 // TODO: Auto-generated Javadoc
 /**
  * The Class UrlConverter.
@@ -85,16 +87,15 @@ import org.jnativehook.keyboard.NativeKeyListener;
  */
 
 /*
- * PLAYLISTS 
- * https://www.youtube.com/watch?v=c7nRTF2SowQ
+ * PLAYLISTS https://www.youtube.com/watch?v=c7nRTF2SowQ
  * https://www.youtube.com/watch?v=acXXyruMtaY&list=PLs1-
  * UdHIwbo5AZVWE4IKJuADxWpz7e-tw
- * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2
+ * https://www.youtube.com/watch?v=Aj0QhLjgxfU&list=PLs1-
+ * UdHIwbo5AZVWE4IKJuADxWpz7e-tw&index=2
  */
 
 /*
- * TIMESTAMPS 
- * https://youtu.be/xnER10j4ZBc?t=1m33s
+ * TIMESTAMPS https://youtu.be/xnER10j4ZBc?t=1m33s
  * https://www.youtube.com/watch?v=xnER10j4ZBc&feature=youtu.be
  * https://www.youtube.com/watch?v=xnER10j4ZBc&t=215
  * https://youtu.be/dT9eI40RNoQ?t=1h51m41s
@@ -107,133 +108,156 @@ import org.jnativehook.keyboard.NativeKeyListener;
  */
 
 public class UrlConverter extends JFrame implements ClipboardOwner, ActionListener, WindowListener, NativeKeyListener {
-	
+
 	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = 1L;
-	
-	/** The operation mode  JLabel component. */
+
+	/** The operation mode JLabel component. */
 	private JLabel lblOperationMode;
-	
+
 	/** The add rule explanation JLabel component. */
 	private JLabel lblAddRuleExplanation;
-	
+
 	/** The URL JLabel component. */
-	private JLabel lblURL; 
-	
+	private JLabel lblURL;
+
 	/** The new URL JLabel component. */
 	private JLabel lblNewURL;
-	
+
 	/** The list instructions JLabel component. */
 	private JLabel lblListInstructions;
-	
+
 	/** The list information JLabel component. */
 	private JLabel lblListInformation;
-	
-	/**  JLabel component displayed at the top of the application window. */
+
+	/** JLabel component displayed at the top of the application window. */
 	private JLabel lblUrlInformation;
-	
-	/**  JLabel component used for displaying status of some application events. */
+
+	/** JLabel component used for displaying status of some application events. */
 	private JLabel lblStatus;
-	
-	/** JLabel component used for displaying explanation for the JList with stored URLs. */
+
+	/**
+	 * JLabel component used for displaying explanation for the JList with stored
+	 * URLs.
+	 */
 	private JLabel lblSavedExplanation;
-	
-	/** The REGEX rule name  JLabel component. */
+
+	/** The REGEX rule name JLabel component. */
 	private JLabel lblRegexRuleName;
-	
+
 	/** The REGEX rule JLabel component. */
 	private JLabel lblRegexRule;
 
 	/** JTextField component used to display YouTube URL before conversion. */
 	private JTextField tfURL;
-	
-	/** JTextField component used to display the YouTube URL after conversion*/
+
+	/** JTextField component used to display the YouTube URL after conversion */
 	private JTextField tfNewURL;
-	
+
 	/** JTextField component used to capture new REGEX pattern name. */
 	private JTextField tfNewRuleName;
-	
+
 	/** JTextField component used to capture new REGEX pattern. */
 	private JTextField tfNewRule;
 
-	/** JButton component used for initializing URL conversion process 
-	 * while the application window is in the active mode. */
+	/**
+	 * JButton component used for initializing URL conversion process while the
+	 * application window is in the active mode.
+	 */
 	private JButton btnConvert;
-	
+
 	/** JButton component used for calling the save converted URL event. */
 	private JButton btnSave;
-	
-	/** JButton component used for opening JOptionPane in which new REGEX pattern rule details 
-	 * are collected and saved in a regex.txt text file. */
+
+	/**
+	 * JButton component used for opening JOptionPane in which new REGEX pattern
+	 * rule details are collected and saved in a regex.txt text file.
+	 */
 	private JButton btnAddRule;
-	
-	/** JButton component used for opening selected URL within the savedURLs JList. */
+
+	/**
+	 * JButton component used for opening selected URL within the savedURLs JList.
+	 */
 	private JButton btnOpenUrl;
-	
-	/** JButton component used for removing unwanted URLs from the saved URL's text file. */
+
+	/**
+	 * JButton component used for removing unwanted URLs from the saved URL's text
+	 * file.
+	 */
 	private JButton btnRemoveUrl;
 
 	/** Variable used to store the value of the new URL in one of the methods. */
 	private String new_URL;
-	
+
 	/** Variable used to store the value of the converted URL. */
 	private String convertedUrl;
-	
-	/** An Array of Strings containing names for default REGEX patterns for the application. */
+
+	/**
+	 * An Array of Strings containing names for default REGEX patterns for the
+	 * application.
+	 */
 	private String[] data = { "Remove Everything", "Remove Time Stamp", "Remove Playlist", "Remove Feature" };
 
 	/** JList used to store REGEX Pattern choices. */
 	private JList<String> regexChoices;
-	
+
 	/** JList used to store saved URL's. */
 	private JList<String> savedURLs;
 
 	/** ListScroller for the list of available regex's. */
 	private JScrollPane regexChoicesScroller;
-	
+
 	/** ListScroller for the saved URL's list. */
 	private JScrollPane savedURLsScroller;
 
 	/** The auto mode JRadioButton. */
 	private JRadioButton auto;
-	
+
 	/** The manual mode JRadioButton. */
 	private JRadioButton manual;
 
 	/** Main panel used to store all of the other components. */
 	private JPanel panel;
-	
+
 	/** Additional panel used to store buttons for managing saved YouTube URLs. */
 	private JPanel panel1;
 
-	/** Variable used for processing the detected YouTube URLs based on its value.
-	 * By default it's value is set to 0. */
+	/**
+	 * Variable used for processing the detected YouTube URLs based on its value. By
+	 * default it's value is set to 0.
+	 */
 	private int selectedRegex;
-	
-	/** Variable for storing state of operation for the application. 
-	 * By default set to false. */
+
+	/**
+	 * Variable for storing state of operation for the application. By default set
+	 * to false.
+	 */
 	private Boolean autoMode;
 
 	/** The ButtonGroup to store operation mode JRadioBoxes. */
 	private ButtonGroup grpOperationMode;
 
-	/** The operation mode box used to store automatic and manual 
-	 * radio buttons via GroupBox above. 
-	*/
+	/**
+	 * The operation mode box used to store automatic and manual radio buttons via
+	 * GroupBox above.
+	 */
 	Box operationModeBox;
-	
+
 	/** TrayIcon used to store the icon for the application. */
 	TrayIcon trayIcon;
-	
-	/** Tray used for allocating the application to the system tray while in minimised mode. */
+
+	/**
+	 * Tray used for allocating the application to the system tray while in
+	 * minimised mode.
+	 */
 	SystemTray tray;
-	
+
 	/** ImageIcon for the OFF state for either of the operation modes. */
 	ImageIcon rBtnIconOff;
-	
+
 	/** ImageIcon for the ON state for either of the operation modes. */
 	ImageIcon rBtnIconOn;
-	
+
 	/** The saved list model. */
 	DefaultListModel<String> savedListModel;
 
@@ -243,7 +267,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/** The keys pressed variable used to store set of currently pressed keys. */
 	private final Set<String> keysPressed = new HashSet<String>();
 
-	/**  Logging. */
+	/** Logging. */
 	private static final Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
 
 	/**
@@ -253,7 +277,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		super("SystemTray test");
 		System.out.println("creating instance");
 
-		//Initialise Panels
+		// Initialise Panels
 		panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
 		panel1 = new JPanel();
@@ -263,22 +287,26 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		c.fill = GridBagConstraints.HORIZONTAL;
 		autoMode = false;
 
-		//change the background colors of all panels and optionpanes
+		// change the background colors of all panels and optionpanes
 		UIManager.put("OptionPane.background", Color.DARK_GRAY);
 		UIManager.put("Panel.background", Color.DARK_GRAY);
 
-		//Initialise ListModel
+		// Initialise ListModel
 		savedListModel = new DefaultListModel<String>();
 
-		//Initialise RadioButtons
+		// Initialise RadioButtons
 		auto = new JRadioButton("Automatic");
 		manual = new JRadioButton("Manual");
 
-		//Initialise ImageIcons
-		rBtnIconOff = new ImageIcon("off_state.png");
-		rBtnIconOn = new ImageIcon("on_state.png");
+		// Initialise ImageIcons
 
-		//Initialise GroupBox with radio buttons
+		// rBtnIconOff = new ImageIcon("off_state.png");
+		Image iconOn = ResourceLoader.getImage("on_state.png");
+		Image iconOff = ResourceLoader.getImage("off_state.png");
+		rBtnIconOff = new ImageIcon(iconOff);
+		rBtnIconOn = new ImageIcon(iconOn);
+
+		// Initialise GroupBox with radio buttons
 		operationModeBox = Box.createVerticalBox();
 		grpOperationMode = new ButtonGroup();
 		grpOperationMode.add(auto);
@@ -300,14 +328,14 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		operationModeBox.setFont(new Font("Abel", Font.PLAIN, 16));
 		operationModeBox.setBorder(BorderFactory.createTitledBorder("Mode"));
 
-		//Initialise JTestFields
+		// Initialise JTestFields
 		tfURL = new JTextField(60); // construct TextField
 		tfNewURL = new JTextField(60); // construct TextField
 		tfNewURL.setEditable(true); // set to read-only
 		tfNewRuleName = new JTextField();
 		tfNewRule = new JTextField();
 
-		//Initialise JLabels
+		// Initialise JLabels
 		lblOperationMode = new JLabel(
 				"<html>Manual operation mode disables automatic replacing of your cliboard contents. Automatic<br>"
 						+ "mode auto converts all youtube urls detected including the ones detected in tray mode");
@@ -340,7 +368,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		lblStatus = new JLabel("Application events will be displayed here");
 		lblStatus.setForeground(Color.YELLOW);
 
-		//Initialise an array of JComponents used in the JOptionPane
+		// Initialise an array of JComponents used in the JOptionPane
 		ruleInputs = new JComponent[] { lblRegexRuleName, tfNewRuleName, lblRegexRule, tfNewRule };
 
 		// Initialise JLists and their corresponding scrollers
@@ -364,7 +392,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		 * if (regexChoicesEnd >= 0) { regexChoices.setSelectionInterval(start,
 		 * regexChoicesEnd); }
 		 */
-		
+
 		selectedRegex = 0;
 		regexChoices.setSelectedIndex(selectedRegex);
 		regexChoices.addListSelectionListener(new ListSelectionListener() {
@@ -483,7 +511,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			System.out.println("system tray supported");
 			tray = SystemTray.getSystemTray();
 
-			Image image = Toolkit.getDefaultToolkit().getImage("Pinwheel-48.png");
+			// Image image =
+			// Toolkit.getDefaultToolkit().getImage("/resources/images/Pinwheel-48.png");
+			Image image = ResourceLoader.getImage("Pinwheel-48.png");
 			ActionListener exitListener = new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					System.out.println("Exiting....");
@@ -549,9 +579,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		});
 
 		/** Set the icon for the application */
-		setIconImage(Toolkit.getDefaultToolkit().getImage("Pinwheel-48.png"));
+		// setIconImage(Toolkit.getDefaultToolkit().getImage("/resources/images/Pinwheel-48.png"));
+		setIconImage(ResourceLoader.getImage("Pinwheel-48.png"));
 		/** "super" Frame sets its title */
-		setTitle("YouTube URL Converter"); 
+		setTitle("YouTube URL Converter");
 
 		panel.setBackground(Color.DARK_GRAY);
 		panel1.setBackground(Color.DARK_GRAY);
@@ -575,13 +606,20 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Adds the item to the panel specified.
 	 *
-	 * @param p the p
-	 * @param c the c
-	 * @param x the x
-	 * @param y the y
-	 * @param width the width
-	 * @param height the height
-	 * @param align the align
+	 * @param p
+	 *            the p
+	 * @param c
+	 *            the c
+	 * @param x
+	 *            the x
+	 * @param y
+	 *            the y
+	 * @param width
+	 *            the width
+	 * @param height
+	 *            the height
+	 * @param align
+	 *            the align
 	 */
 	private void addItem(JPanel p, JComponent c, int x, int y, int width, int height, int align) {
 		GridBagConstraints gc = new GridBagConstraints();
@@ -600,9 +638,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Populate array from list.
 	 *
-	 * @param <T> the generic type
-	 * @param arr the arr
-	 * @param arrayList the array list
+	 * @param <T>
+	 *            the generic type
+	 * @param arr
+	 *            the arr
+	 * @param arrayList
+	 *            the array list
 	 */
 	private <T> void populateArrayFromList(T[] arr, ArrayList<T> arrayList) {
 		System.out.println("Array size " + arr.length);
@@ -618,12 +659,28 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	 *
 	 * @return the array list
 	 */
-	private static ArrayList<String> fetchSaved() {
+	private ArrayList<String> fetchSaved() {
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		
+		File file = new File(customDir, "saved.txt");
+		if (customDir.exists() || customDir.mkdirs()) {
+			// Path either exists or was created
+			
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		
 		Scanner s;
 		int count = 0;
 		ArrayList<String> savedList = new ArrayList<String>();
 		try {
-			s = new Scanner(new File("saved.txt"));
+			s = new Scanner(file);
 			while (s.hasNext()) {
 				savedList.add(s.next());
 				count += 1;
@@ -642,12 +699,28 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	 *
 	 * @return the array list
 	 */
-	private static ArrayList<String> fetchHistory() {
+	private ArrayList<String> fetchHistory() {
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		
+		File file = new File(customDir, "history.txt");
+		if (customDir.exists() || customDir.mkdirs()) {
+			// Path either exists or was created
+			
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		
 		Scanner s;
 		int count = 0;
 		ArrayList<String> historyList = new ArrayList<String>();
 		try {
-			s = new Scanner(new File("History.txt"));
+			s = new Scanner(file);
 			while (s.hasNext()) {
 				historyList.add(s.next());
 				count += 1;
@@ -664,7 +737,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * The main method.
 	 *
-	 * @param args the arguments
+	 * @param args
+	 *            the arguments
 	 */
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -685,7 +759,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	/**
-	 * Return REGEX method used to for choosing REGEX pattern to be used for URL conversion.
+	 * Return REGEX method used to for choosing REGEX pattern to be used for URL
+	 * conversion.
 	 *
 	 * @return the string
 	 */
@@ -715,8 +790,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Modify URL method for converting captured YouTube URLs.
 	 *
-	 * @param Regex the regex
-	 * @param convertedString the converted string
+	 * @param Regex
+	 *            the regex
+	 * @param convertedString
+	 *            the converted string
 	 * @return the string
 	 */
 	public String modifyURL(String Regex, String convertedString) {
@@ -730,7 +807,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			if (count == 1) {
 				convertedUrl = convertedString.substring(0, m.start()) + convertedString.substring(m.end());
 				tfNewURL.setText(convertedUrl);
-				appendHistoryLog(convertedUrl);
+				fileWriter(convertedUrl, "history.txt");
+				//appendHistoryLog(convertedUrl);
 			} else {
 				lblStatus.setText("Can't remove as the requested tag was not found in the url");
 			}
@@ -741,18 +819,33 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Append saved method used for storing the specified URL in a text file.
 	 *
-	 * @param convertedURL the converted URL
+	 * @param convertedURL
+	 *            the converted URL
 	 */
 	public void appendSaved(String convertedURL) {
 
-		File file = new File("saved.txt");
-
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		
+		//InputStream file = ResourceLoader.getFile("saved.txt");
+		File file = new File(customDir, "saved.txt");
+		Scanner scanner;
+		int lineNum = 0;
 		try {
-			Scanner scanner = new Scanner(file);
-			int lineNum = 0;
+			scanner = new Scanner(file);
+			if (customDir.exists() || customDir.mkdirs()) {
+				// Path either exists or was created
+				
+				try {
+					file.createNewFile();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 
-			if (file.exists() && !scanner.hasNextLine()) {
-				try (FileWriter fw = new FileWriter("saved.txt", true);
+			if (!scanner.hasNextLine()) {
+				try (FileWriter fw = new FileWriter(file, true);
 						BufferedWriter bw = new BufferedWriter(fw);
 						PrintWriter out = new PrintWriter(bw)) {
 					lblStatus.setText("Blank file, adding your first link");
@@ -778,10 +871,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 						lblStatus.setText("Link already saved at line: " + lineNum);
 						break;
 					} else if (!scanner.hasNextLine()) {
-						try (FileWriter fw = new FileWriter("saved.txt", true);
+						try (FileWriter fw = new FileWriter(file, true);
 								BufferedWriter bw = new BufferedWriter(fw);
 								PrintWriter out = new PrintWriter(bw)) {
 							System.out.println("inside of else");
+							System.out.println(ResourceLoader.getFile("saved.txt").toString());
 							out.println(convertedURL);
 							lblStatus.setText("Url successfully saved!");
 							savedListModel.addElement(convertedURL);
@@ -791,23 +885,35 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 					}
 				}
 			}
+			} else {
+				// The path could not be created for some reason
+			}
 			scanner.close();
-		} catch (FileNotFoundException e) {
-			lblStatus.setText(e.toString());
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
 		}
-
 	}
 
 	/**
 	 * Removes the specified saved URL from the text file.
 	 *
-	 * @param urlToRemove the url to remove
+	 * @param urlToRemove
+	 *            the url to remove
 	 */
 	public void removeSaved(String urlToRemove) {
-		File file = new File("saved.txt");
+		
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		
+		//InputStream file = ResourceLoader.getFile("saved.txt");
+		File file = new File(customDir, "saved.txt");
+		if (!customDir.exists()) {}
+		
 		File temp = null;
 		try {
-			temp = File.createTempFile("file", ".txt", file.getParentFile());
+			temp = File.createTempFile(path, "file.txt", file.getParentFile());
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -852,18 +958,40 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Append history log with the successfully converted URL.
 	 *
-	 * @param convertedURL the converted URL
+	 * @param convertedURL
+	 *            the converted URL
 	 */
 	public void appendHistoryLog(String convertedURL) {
 		String url_to_save = convertedURL + "\n";
-		try (FileWriter fw = new FileWriter("history.txt", true);
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			out.println(url_to_save);
-			lblStatus.setText("Url successfully saved!");
-		} catch (IOException e) {
-			lblStatus.setText(e.toString());
+
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		if (customDir.exists() || customDir.mkdirs()) {
+			// Path either exists or was created
+			File file = new File(customDir, "history.txt");
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try (FileWriter fw = new FileWriter(file, true);
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(url_to_save);
+			} catch (IOException e) {
+				lblStatus.setText(e.toString());
+			}
+		} else {
+			// The path could not be created for some reason
 		}
+		/*
+		 * System.out.println("appendHistory: " + url_to_save); PrintWriter writer =
+		 * ResourceLoader.getFileForWrite("history.txt"); writer.println(url_to_save);
+		 * lblStatus.setText("Url successfully saved!");
+		 */
+
 		/*
 		 * try { Files.write(Paths.get("history.txt"), url_to_save.getBytes(),
 		 * StandardOpenOption.APPEND); } catch (IOException e) { // tfNewURL
@@ -874,19 +1002,84 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Save rule to file.
 	 *
-	 * @param ruleName the rule name
-	 * @param ruleContents the rule contents
+	 * @param ruleName
+	 *            the rule name
+	 * @param ruleContents
+	 *            the rule contents
 	 */
+
+	public void fileWriter(String valueToWrite, String fileName) {
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		if (customDir.exists() || customDir.mkdirs()) {
+			// Path either exists or was created
+			File file = new File(customDir, fileName);
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try (FileWriter fw = new FileWriter(file, true);
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(valueToWrite);
+				if (fileName == "saved.txt") {
+					lblStatus.setText("Url saved successfully saved!");
+				} else if (fileName == "history.txt") {
+					System.out.println("Url added to history");
+				} else if (fileName == "regex.txt") {
+					lblStatus.setText("Rule successfully saved!");
+				} else {
+					// shouldn't get here
+					lblStatus.setText("Something went wrong while saving");
+				}
+
+			} catch (IOException e) {
+				lblStatus.setText(e.toString());
+			}
+		} else {
+			// The path could not be created for some reason
+		}
+	}
+
 	public void saveRuleToFile(String ruleName, String ruleContents) {
 		String ruleToSave = ruleName + "," + ruleContents + "\n";
-		try (FileWriter fw = new FileWriter("regex.txt", true);
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter out = new PrintWriter(bw)) {
-			out.println(ruleToSave);
-			lblStatus.setText("Rule successfully saved!");
-		} catch (IOException e) {
-			lblStatus.setText(e.toString());
+
+		String path = System.getProperty("user.home") + File.separator + "Documents";
+		path += File.separator + "UrlConverter";
+		File customDir = new File(path);
+		if (customDir.exists() || customDir.mkdirs()) {
+			// Path either exists or was created
+			File file = new File(customDir, "regex.txt");
+			try {
+				file.createNewFile();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try (FileWriter fw = new FileWriter(file, true);
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(ruleToSave);
+				lblStatus.setText("Rule successfully saved!");
+			} catch (IOException e) {
+				lblStatus.setText(e.toString());
+			}
+		} else {
+			// The path could not be created for some reason
 		}
+
+		/*
+		 * try (FileWriter fw = new FileWriter(
+		 * UrlConverter.class.getClassLoader().getResource(
+		 * "/resources/textfiles/regex.txt").toString(), true); BufferedWriter bw = new
+		 * BufferedWriter(fw); PrintWriter out = new PrintWriter(bw)) {
+		 * out.println(ruleToSave);
+		 * 
+		 * } catch (IOException e) { lblStatus.setText(e.toString()); }
+		 */
 	}
 
 	/**
@@ -914,7 +1107,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	/**
-	 * Convert parts of the URL that are always the same to some other that is required.
+	 * Convert parts of the URL that are always the same to some other that is
+	 * required.
 	 *
 	 * @return the string
 	 */
@@ -979,7 +1173,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	 * Place a String on the clipboard, and make this class the owner of the
 	 * Clipboard's contents.
 	 *
-	 * @param aString the new clipboard contents
+	 * @param aString
+	 *            the new clipboard contents
 	 */
 	public void setClipboardContents(String aString) {
 		StringSelection stringSelection = new StringSelection(aString);
@@ -987,8 +1182,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		clipboard.setContents(stringSelection, this);
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.
+	 * Clipboard, java.awt.datatransfer.Transferable)
 	 */
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
@@ -997,9 +1196,10 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	}
 
 	/**
-	 *  ActionEvent handler - Called back upon button-click.
+	 * ActionEvent handler - Called back upon button-click.
 	 *
-	 * @param evt the evt
+	 * @param evt
+	 *            the evt
 	 */
 	@Override
 	public void actionPerformed(ActionEvent evt) {
@@ -1021,7 +1221,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 			if (result == JOptionPane.OK_OPTION) {
 				System.out.println("You entered " + tfNewRuleName.getText() + ", " + tfNewRule.getText());
 				if (tfNewRuleName.getText().trim().length() > 1 && tfNewRule.getText().trim().length() > 1) {
-					saveRuleToFile(tfNewRuleName.getText(), tfNewRule.getText());
+					String ruleToSave = tfNewRuleName.getText() + "," + tfNewRule.getText() + "\n";
+					//saveRuleToFile(tfNewRuleName.getText(), tfNewRuleName.getText());
+					fileWriter(ruleToSave,"regex.txt");
 					lblStatus.setText("Your rule has been saved successfully");
 				} else {
 					lblStatus.setText("Something went wrong while attempting to save your rule");
@@ -1033,6 +1235,7 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		} else if (evt.getSource() == btnSave) {
 			if (tfNewURL.getText().length() > 0) {
 				appendSaved(tfNewURL.getText());
+				//fileWriter(tfNewURL.getText(), "saved.txt");
 			} else {
 				lblStatus.setText("Nothing to save!");
 			}
@@ -1076,8 +1279,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.event.WindowListener#windowActivated(java.awt.event.WindowEvent)
 	 */
 	@Override
 	public void windowActivated(WindowEvent arg0) {
@@ -1085,7 +1291,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		checkClipboardContents();
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.awt.event.WindowListener#windowClosed(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1094,7 +1302,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1103,8 +1313,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.exit(0); // Terminate the program
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.event.WindowListener#windowDeactivated(java.awt.event.WindowEvent)
 	 */
 	@Override
 	public void windowDeactivated(WindowEvent e) {
@@ -1112,8 +1325,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
 	 */
 	@Override
 	public void windowDeiconified(WindowEvent e) {
@@ -1121,8 +1337,11 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
 	 */
 	@Override
 	public void windowIconified(WindowEvent e) {
@@ -1130,7 +1349,9 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.awt.event.WindowListener#windowOpened(java.awt.event.WindowEvent)
 	 */
 	@Override
@@ -1141,7 +1362,8 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 	/**
 	 * Display all.
 	 *
-	 * @param col the col
+	 * @param col
+	 *            the col
 	 */
 	static void displayAll(Collection<Character> col) {
 		Iterator<Character> itr = col.iterator();
@@ -1152,8 +1374,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.out.println();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyPressed(org.jnativehook.keyboard.NativeKeyEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.jnativehook.keyboard.NativeKeyListener#nativeKeyPressed(org.jnativehook.
+	 * keyboard.NativeKeyEvent)
 	 */
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent e) {
@@ -1196,8 +1422,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyReleased(org.jnativehook.keyboard.NativeKeyEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.jnativehook.keyboard.NativeKeyListener#nativeKeyReleased(org.jnativehook.
+	 * keyboard.NativeKeyEvent)
 	 */
 	@Override
 	public void nativeKeyReleased(NativeKeyEvent e) {
@@ -1207,8 +1437,12 @@ public class UrlConverter extends JFrame implements ClipboardOwner, ActionListen
 		System.out.print(keysPressed.size() + " released \n");
 	}
 
-	/* (non-Javadoc)
-	 * @see org.jnativehook.keyboard.NativeKeyListener#nativeKeyTyped(org.jnativehook.keyboard.NativeKeyEvent)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.jnativehook.keyboard.NativeKeyListener#nativeKeyTyped(org.jnativehook.
+	 * keyboard.NativeKeyEvent)
 	 */
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent e) {
